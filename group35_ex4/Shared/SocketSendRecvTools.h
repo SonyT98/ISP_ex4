@@ -40,7 +40,7 @@ TransferResult_t SendBuffer( const char* Buffer, int BytesToSend, SOCKET sd );
  * Str - the string to send. 
  * sd - the socket used for communication.
  */ 
-TransferResult_t SendString( const char *Str, SOCKET sd );
+TransferResult_t SendCharArray(const char *Str, SOCKET sd, const int ArraySize);
 
 /**
  * Accepts:
@@ -80,7 +80,7 @@ TransferResult_t ReceiveBuffer( char* OutputBuffer, int RemainingBytesToReceive,
  * TRNS_DISCONNECTED - if the socket was disconnected
  * TRNS_FAILED - otherwise
  */ 
-TransferResult_t ReceiveString( char** OutputStrPtr, SOCKET sd );
+TransferResult_t ReceiveCharArray(char** OutputStrPtr, SOCKET sd, int *ArraySize);
 
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/

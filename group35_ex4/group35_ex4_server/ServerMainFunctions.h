@@ -1,0 +1,6 @@
+#pragma once
+#ifndef __SERVERMAINFUNCTIONS_H__
+#define __SERVERMAINFUNCTIONS_H__
+
+
+#endif // __SERVERMAINFUNCTIONS_H__

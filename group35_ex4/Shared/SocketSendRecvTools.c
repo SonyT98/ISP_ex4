@@ -39,27 +39,24 @@ TransferResult_t SendBuffer( const char* Buffer, int BytesToSend, SOCKET sd )
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-TransferResult_t SendString( const char *Str, SOCKET sd )
+TransferResult_t SendCharArray( const char *Str, SOCKET sd, const int ArraySize)
 {
 	/* Send the the request to the server on socket sd */
-	int TotalStringSizeInBytes;
 	TransferResult_t SendRes;
 
 	/* The request is sent in two parts. First the Length of the string (stored in 
 	   an int variable ), then the string itself. */
-		
-	TotalStringSizeInBytes = (int)( strlen(Str) + 1 ); // terminating zero also sent	
 
 	SendRes = SendBuffer( 
-		(const char *)( &TotalStringSizeInBytes ),
-		(int)( sizeof(TotalStringSizeInBytes) ), // sizeof(int) 
+		(const char *)( &ArraySize ),
+		(int)( sizeof(int) ), // sizeof(int) 
 		sd );
 
 	if ( SendRes != TRNS_SUCCEEDED ) return SendRes ;
 
 	SendRes = SendBuffer( 
 		(const char *)( Str ),
-		(int)( TotalStringSizeInBytes ), 
+		(int)( ArraySize ), 
 		sd );
 
 	return SendRes;
@@ -94,12 +91,12 @@ TransferResult_t ReceiveBuffer( char* OutputBuffer, int BytesToReceive, SOCKET s
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-TransferResult_t ReceiveString( char** OutputStrPtr, SOCKET sd )
+TransferResult_t ReceiveCharArray( char** OutputStrPtr, SOCKET sd, int *ArraySize )
 {
 	/* Recv the the request to the server on socket sd */
-	int TotalStringSizeInBytes;
+	int TotalArraySizeInBytes;
 	TransferResult_t RecvRes;
-	char* StrBuffer = NULL;
+	char* CharBuffer = NULL;
 
 	if ( ( OutputStrPtr == NULL ) || ( *OutputStrPtr != NULL ) )
 	{
@@ -114,28 +111,29 @@ TransferResult_t ReceiveString( char** OutputStrPtr, SOCKET sd )
 	   an int variable ), then the string itself. */
 		
 	RecvRes = ReceiveBuffer( 
-		(char *)( &TotalStringSizeInBytes ),
-		(int)( sizeof(TotalStringSizeInBytes) ), // 4 bytes
+		(char *)( &TotalArraySizeInBytes ),
+		(int)( sizeof(TotalArraySizeInBytes) ), // 4 bytes
 		sd );
 
 	if ( RecvRes != TRNS_SUCCEEDED ) return RecvRes;
 
-	StrBuffer = (char*)malloc( TotalStringSizeInBytes * sizeof(char) );
+	CharBuffer = (char*)malloc( TotalArraySizeInBytes * sizeof(char) );
 
-	if ( StrBuffer == NULL )
+	if ( CharBuffer == NULL )
 		return TRNS_FAILED;
 
 	RecvRes = ReceiveBuffer( 
-		(char *)( StrBuffer ),
-		(int)( TotalStringSizeInBytes), 
+		(char *)( CharBuffer ),
+		(int)( TotalArraySizeInBytes), 
 		sd );
 
 	if ( RecvRes == TRNS_SUCCEEDED ) 
-		{ *OutputStrPtr = StrBuffer; }
+		{ *OutputStrPtr = CharBuffer; }
 	else
 	{
-		free( StrBuffer );
+		free( CharBuffer );
 	}
+	*ArraySize = TotalArraySizeInBytes;
 		
 	return RecvRes;
 }

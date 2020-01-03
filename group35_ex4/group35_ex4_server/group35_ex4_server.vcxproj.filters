@@ -21,16 +21,46 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Shared\SocketExampleShared.h">
-      <Filter>Shared Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Shared\SocketSendRecvTools.h">
       <Filter>Shared Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\SharedHardCodedData.h">
+      <Filter>Shared Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\ThreadFunctions.h">
+      <Filter>Shared Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerThreads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerMainFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HardCodedData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalVariables.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\SocketSendRecvTools.c">
       <Filter>Shared Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Shared\ThreadFunctions.c">
+      <Filter>Shared Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerThreads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerMainFunctions.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalVariables.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -117,11 +117,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Shared\SocketExampleShared.h" />
+    <ClInclude Include="..\Shared\SharedHardCodedData.h" />
     <ClInclude Include="..\Shared\SocketSendRecvTools.h" />
+    <ClInclude Include="..\Shared\ThreadFunctions.h" />
+    <ClInclude Include="GlobalVariables.h" />
+    <ClInclude Include="HardCodedData.h" />
+    <ClInclude Include="ServerMainFunctions.h" />
+    <ClInclude Include="ServerThreads.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\SocketSendRecvTools.c" />
+    <ClCompile Include="..\Shared\ThreadFunctions.c" />
+    <ClCompile Include="GlobalVariables.c" />
+    <ClCompile Include="main.c" />
+    <ClCompile Include="ServerMainFunctions.c" />
+    <ClCompile Include="ServerThreads.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

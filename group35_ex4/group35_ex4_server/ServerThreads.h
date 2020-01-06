@@ -2,15 +2,20 @@
 #ifndef __SERVERTHREADS_H__
 #define __SERVERTHREADS_H__
 
+#include "SharedHardCodedData.h"
+#include "HardCodedData.h"
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <windows.h>
-#include <limits.h>
-#include <string.h>
-#include <tchar.h>
-#include <stdlib.h>
 
+DWORD AcceptClientThread(LPSTR lpParam);
+
+/*
+* constanly check if user entered the word exit from cmd
+* Input Arguments :
+	lpParam - can be NULL
+* Return :
+*	return 2 if exit was enter. -1 if error
+*/
+DWORD WINAPI CheckExitThread(LPSTR lpParam);
 
 #endif // __SERVERTHREADS_H__
 

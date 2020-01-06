@@ -2,12 +2,35 @@
 #include "ServerThreads.h"
 
 
-DWORD AcceptClientThread(LPSTR lpParam)
+
+
+DWORD WINAPI AcceptClientThread(LPSTR lpParam)
 {
-	SOCKET AcceptSocket = accept(MainSocket, NULL, NULL);
-	if (AcceptSocket == INVALID_SOCKET)
+	AcceptSocketParams *param = (AcceptSocketParams*)lpParam;
+
+	
+	param->AcceptSocket = accept(param->mainSocket , NULL, NULL);
+	if (param->AcceptSocket == INVALID_SOCKET)
 	{
 		printf("Accepting connection with client failed, error %ld\n", WSAGetLastError());
+		return ERROR_CODE;
 	}
+	return 1;
+}
 
+DWORD WINAPI CheckExitThread(LPSTR lpParam)
+{
+	bool flag = TRUE;
+	char message[100];
+	int retVal = 0;
+	while (flag)
+	{
+		retVal = scanf_s("%s", message,100);
+
+		if (strcmp(message, "exit") == 0)
+		{
+			return 2;
+		}
+	}
+	return ERROR_CODE;
 }

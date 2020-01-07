@@ -11,8 +11,21 @@
 #include <string.h>
 #include <tchar.h>
 #include <stdlib.h>
+#include "SharedHardCodedData.h"
+#include "HardCodedData.h"
 
 // Function Declarations -------------------------------------------------------
+
+DWORD AcceptClientThread(LPSTR lpParam);
+
+/*
+* constanly check if user entered the word exit from cmd
+* Input Arguments :
+	lpParam - can be NULL
+* Return :
+*	return 2 if exit was enter. -1 if error
+*/
+DWORD WINAPI CheckExitThread(LPSTR lpParam);
 
 /*
 * GetClientName communicate with the client and gets his username

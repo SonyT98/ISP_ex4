@@ -4,13 +4,7 @@
 
 // Includes --------------------------------------------------------------------
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <windows.h>
-#include <limits.h>
-#include <string.h>
-#include <tchar.h>
-#include <stdlib.h>
+#include "SharedHardCodedData.h"
 
 // Function Declarations -------------------------------------------------------
 

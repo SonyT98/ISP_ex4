@@ -1,7 +1,5 @@
 
 #include "ServerThreads.h"
-#include "ThreadFunctions.h"
-#include "HardCodedData.h"
 #include "SharedHardCodedData.h"
 
 
@@ -35,9 +33,4 @@ DWORD WINAPI CheckExitThread(LPSTR lpParam)
 		}
 	}
 	return ERROR_CODE;
-}
-
-int GetClientName(char *username)
-{
-
 }

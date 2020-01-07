@@ -16,15 +16,18 @@
 
 #define ERROR_CODE ((int)(-1))
 #define MAX_USERNAME 20
+#define MAX_MESSAGE 60
+#define SENDRECV_WAITTIME 15000
 
 #define SERVER_ADDRESS_STR "127.0.0.1"
 #define SERVER_PORT 8888
+#define CONNECTION_DISCONNECTED 1
 
 /*------------------------- Client Messages ----------------------------------*/
 
-#define CLIENT_REQUEST "CLIENT_REQUEST:%s\n"
+#define CLIENT_REQUEST "CLIENT_REQUEST"
 #define CLIENT_MAIN_MENU "CLIENT_MAIN_MENU:\n"
-#define CLIENT_CPU "CLIENT_CPU:\n"
+#define CLIENT_CPU "CLIENT_CPU"
 #define CLIENT_VERSUS "CLIENT_VERSUS:\n"
 #define CLIENT_LEADERBOARD "CLIENT_LEADERBOARD:\n"
 #define CLIENT_PLAYER_MOVE "CLIENT_PLAYER_MOVE:%s\n"
@@ -35,7 +38,7 @@
 /*------------------------- Server Messages ----------------------------------*/
 
 #define SERVER_MAIN_MENU "SERVER_MAIN_MENU:\n"
-#define SERVER_APPROVED "SERVER_APPROVED:\n"
+#define SERVER_APPROVED "SERVER_APPROVED"
 #define SERVER_DENIED "SERVER_DENIED:%s\n"
 #define SERVER_INVITE "SERVER_INVITE:%s\n"
 #define SERVER_PLAYER_MOVE_REQUEST "SERVER_MAIN_MENU:\n"
@@ -49,7 +52,7 @@
 typedef struct
 {
 	SOCKET sock;
-	char *send_array;
+	char *array_t;
 	int array_size;
 
 } sendthread_s;

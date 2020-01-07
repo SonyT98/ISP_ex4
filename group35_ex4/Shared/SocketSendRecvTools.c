@@ -10,8 +10,6 @@
 #include "SocketSendRecvTools.h"
 #include "SharedHardCodedData.h"
 
-#include <stdio.h>
-#include <string.h>
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
@@ -40,7 +38,7 @@ TransferResult_t SendBuffer( const char* Buffer, int BytesToSend, SOCKET sd )
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-TransferResult_t SendCharArray( const char *Str, SOCKET sd, const int ArraySize)
+TransferResult_t SendCharArray( const char *Str, SOCKET sd, int* ArraySize)
 {
 	/* Send the the request to the server on socket sd */
 	TransferResult_t SendRes;
@@ -49,7 +47,7 @@ TransferResult_t SendCharArray( const char *Str, SOCKET sd, const int ArraySize)
 	   an int variable ), then the string itself. */
 
 	SendRes = SendBuffer( 
-		(const char *)( &ArraySize ),
+		(const char *)( ArraySize ),
 		(int)( sizeof(int) ), // sizeof(int) 
 		sd );
 
@@ -57,7 +55,7 @@ TransferResult_t SendCharArray( const char *Str, SOCKET sd, const int ArraySize)
 
 	SendRes = SendBuffer( 
 		(const char *)( Str ),
-		(int)( ArraySize ), 
+		(int)( *ArraySize ), 
 		sd );
 
 	return SendRes;
@@ -141,7 +139,7 @@ TransferResult_t ReceiveCharArray( char** OutputStrPtr, SOCKET sd, int *ArraySiz
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-DWORD SendThread(LPSTR lpParam)
+DWORD WINAPI SendThread(LPSTR lpParam)
 {
 	sendthread_s *arg;
 	TransferResult_t SendRes;
@@ -153,7 +151,7 @@ DWORD SendThread(LPSTR lpParam)
 	}
 
 	arg = (sendthread_s*)lpParam;
-	SendRes = SendCharArray(arg->send_array, arg->sock, arg->array_size);
+	SendRes = SendCharArray(arg->array_t, arg->sock, &(arg->array_size));
 
 	if (SendRes == TRNS_FAILED)
 	{
@@ -164,3 +162,29 @@ DWORD SendThread(LPSTR lpParam)
 }
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
+DWORD WINAPI RecvThread(LPSTR lpParam)
+{
+	sendthread_s *arg;
+	TransferResult_t RecvRes;
+
+	/* Check if lpParam is NULL */
+	if (NULL == lpParam)
+	{
+		return ERROR_CODE;
+	}
+
+	arg = (sendthread_s*)lpParam;
+	RecvRes = ReceiveCharArray(&(arg->array_t), arg->sock, &(arg->array_size));
+	if (RecvRes == TRNS_FAILED)
+	{
+		printf("Service socket error while reading\n");
+		return 0x555;
+	}
+	else if (RecvRes == TRNS_DISCONNECTED)
+	{
+		printf("Connection closed while reading\n");
+		return CONNECTION_DISCONNECTED;
+	}
+	return 0;
+}

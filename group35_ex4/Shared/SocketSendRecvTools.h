@@ -86,8 +86,21 @@ TransferResult_t ReceiveCharArray(char** OutputStrPtr, SOCKET sd, int *ArraySize
 * Input Argument:
 *	lpParam - global paramter to the thread, when we use this function
 *	we will send the sendthread_s struct.
+* Output:
+* return 0x555 if the message didnt got delivered.
 */
 DWORD SendThread(LPSTR lpParam);
+
+/*
+* RecvThread will receive the buffer from specific socket
+* Input Argument:
+*	lpParam - global paramter to the thread, when we use this function
+*	we will send the sendthread_s struct.
+* Output:
+* return 0x555 if the message didnt go through. return 1 if there is a
+* disconnection.
+*/
+DWORD RecvThread(LPSTR lpParam);
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 

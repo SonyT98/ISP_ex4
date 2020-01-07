@@ -81,6 +81,13 @@ TransferResult_t ReceiveBuffer( char* OutputBuffer, int RemainingBytesToReceive,
  */ 
 TransferResult_t ReceiveCharArray(char** OutputStrPtr, SOCKET sd, int *ArraySize);
 
+/*
+* SendThread will send the buffer to the specific socket.
+* Input Argument:
+*	lpParam - global paramter to the thread, when we use this function
+*	we will send the sendthread_s struct.
+*/
+DWORD SendThread(LPSTR lpParam);
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 

@@ -8,6 +8,7 @@
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 #include "SocketSendRecvTools.h"
+#include "SharedHardCodedData.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -137,3 +138,29 @@ TransferResult_t ReceiveCharArray( char** OutputStrPtr, SOCKET sd, int *ArraySiz
 		
 	return RecvRes;
 }
+
+/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
+DWORD SendThread(LPSTR lpParam)
+{
+	sendthread_s *arg;
+	TransferResult_t SendRes;
+
+	/* Check if lpParam is NULL */
+	if (NULL == lpParam)
+	{
+		return ERROR_CODE;
+	}
+
+	arg = (sendthread_s*)lpParam;
+	SendRes = SendCharArray(arg->send_array, arg->sock, arg->array_size);
+
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Socket error while trying to write data to socket\n");
+		return 0x555;
+	}
+	return 0;
+}
+
+/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/

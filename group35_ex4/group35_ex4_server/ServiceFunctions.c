@@ -9,8 +9,6 @@ int ClientUsername(SOCKET sock, char *username)
 
 	char *temp_message;
 
-	HANDLE sendrecv_handle = NULL;
-	LPWORD sendrecv_lp;
 	sendthread_s *packet;
 
 	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
@@ -33,7 +31,7 @@ int ClientUsername(SOCKET sock, char *username)
 	packet->array_size = 0;
 
 	//activate the recv thread and get his exit code
-	exit_code = ActivateThread(sendrecv_handle, sendrecv_lp, (void*)packet, 0);
+	exit_code = ActivateThread((void*)packet, 0, SENDRECV_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0){ret = exit_code;  goto cleanup_memory;}
 
@@ -54,7 +52,6 @@ int ClientUsername(SOCKET sock, char *username)
 
 
 	/*----------------------------send SERVER_APPROVED-----------------------------*/
-	sendrecv_handle = NULL;
 	err = sscanf_s(message_send, "%s:\n", SERVER_APPROVED, sizeof(SERVER_APPROVED));
 	if (err == 0 || err == EOF)
 	{
@@ -66,11 +63,11 @@ int ClientUsername(SOCKET sock, char *username)
 	packet->array_t = message_send;
 
 	//activate the send thread and get his exit code
-	exit_code = ActivateThread(sendrecv_handle, sendrecv_lp, (void*)packet, 1);
+	exit_code = ActivateThread((void*)packet, 1, SENDRECV_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0) { ret = exit_code;  goto main_cleanup1; }
 
-
+	ret = exit_code;
 
 main_cleanup1:
 	free(temp_message);
@@ -80,6 +77,7 @@ return_ret:
 	return ret;
 }
 
+
 int SelectFromMenu(SOCKET sock, int* menu_select)
 {
 	//variables
@@ -87,8 +85,6 @@ int SelectFromMenu(SOCKET sock, int* menu_select)
 	char message_info[MAX_MESSAGE];
 	char message_send[MAX_MESSAGE];
 
-	HANDLE sendrecv_handle = NULL;
-	LPWORD sendrecv_lp;
 	sendthread_s *packet;
 
 	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
@@ -119,7 +115,7 @@ int SelectFromMenu(SOCKET sock, int* menu_select)
 	packet->array_size = strlen(message_send);
 
 	//activate the send thread and get his exit code
-	exit_code = ActivateThread(sendrecv_handle, sendrecv_lp, (void*)packet, 1);
+	exit_code = ActivateThread((void*)packet, 1, SENDRECV_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
 
@@ -129,7 +125,7 @@ int SelectFromMenu(SOCKET sock, int* menu_select)
 	packet->array_size = 0;
 
 	//activate the recv thread and get his exit code
-	exit_code = ActivateThread(sendrecv_handle, sendrecv_lp, (void*)packet, 0);
+	exit_code = ActivateThread((void*)packet, 0, SENDRECV_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
 
@@ -163,6 +159,104 @@ return_ret:
 	return ret;
 }
 
+
+int CPUGame(SOCKET sock, int *replay)
+{
+	//variables
+	char message_type[MAX_MESSAGE];
+	char message_info[MAX_MESSAGE];
+	char message_send[MAX_MESSAGE];
+
+	sendthread_s *packet;
+
+	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
+	int player_move = 0, cpu_move = 0;
+
+	time_t t;
+
+
+	//malloc for the sendthread_s struct
+	packet = (sendthread_s*)malloc(sizeof(sendthread_s));
+	if (packet == NULL)
+	{
+		printf("ERROR: allocate memory for thread arg\n");
+		ret = ERROR_CODE;
+		goto return_ret;
+	}
+
+	//intialize the socket to the thread functions
+	packet->sock = sock;
+
+	/*----------------------------send SERVER_PLAYER_MOVE_REQUEST-----------------------------*/
+	err = sscanf_s(message_send, "%s:\n", SERVER_PLAYER_MOVE_REQUEST, sizeof(SERVER_PLAYER_MOVE_REQUEST));
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: can't create the message for the client\n");
+		ret = ERROR_CODE;
+		goto cleanup_memory;
+	}
+
+	packet->array_t = message_send;
+	packet->array_size = strlen(message_send);
+
+	//activate the send thread and get his exit code
+	exit_code = ActivateThread((void*)packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
+
+
+	/*-------------------------------recv CLIENT_PLAYER_MOVE---------------------------------*/
+	packet->array_t = NULL;
+	packet->array_size = 0;
+
+	//activate the recv thread and get his exit code
+	exit_code = ActivateThread((void*)packet, 0, USER_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
+
+	//get the message type and the information
+	err = MessageCut(packet->array_t, packet->array_size, message_type, message_info);
+	if (err == ERROR_CODE) { ret = ERROR_CODE; goto cleanup_memory; }
+
+	if (!STRINGS_ARE_EQUAL(message_type, CLIENT_PLAYER_MOVE))
+	{
+		printf("Error: message recieved from the client doesnt match with the protocol\n");
+		ret = ERROR_CODE;
+		goto cleanup_memory;
+	}
+
+	if (STRINGS_ARE_EQUAL(message_info, "ROCK"))
+		player_move = 1;
+	else if (STRINGS_ARE_EQUAL(message_info, "PAPER"))
+		player_move = 2;
+	else if (STRINGS_ARE_EQUAL(message_info, "SCISSORS"))
+		player_move = 3;
+	else if (STRINGS_ARE_EQUAL(message_info, "LIZARD"))
+		player_move = 4;
+	else if (STRINGS_ARE_EQUAL(message_info, "SPOCK"))
+		player_move = 5;
+	else
+	{
+		printf("Error: client move doesnt match with the protocol\n");
+		ret = ERROR_CODE;
+		goto cleanup_memory;
+	}
+
+	free(packet->array_t);
+
+	/*------------------------------- Play CPU match ---------------------------------*/
+	/* Intializes random number generator */
+	srand((unsigned)time(&t));
+
+
+
+cleanup_memory:
+	free(packet);
+return_ret:
+	return ret;
+}
+
+
 int MessageCut(char *message, int message_size, char* message_type, char *info)
 {
 	int i = 0;
@@ -180,7 +274,6 @@ int MessageCut(char *message, int message_size, char* message_type, char *info)
 			{
 				message_type[i] = '\0';
 				info_or_type = 1;
-
 			}
 		}
 		//this is a info type
@@ -189,15 +282,22 @@ int MessageCut(char *message, int message_size, char* message_type, char *info)
 	}
 	//if we didnt got to ':' char this isnt a correct message
 	if (info_or_type == 0)
+	{
+		printf("Error: The message received isn't correct\n");
 		return ERROR_CODE;
+	}
 	// set info as string
 	else
 		info[i - type_size-1] = '\0';
 	return 0;
 }
 
-int ActivateThread(HANDLE thread_handle, LPWORD thread_id, void *arg, int recv_or_send)
+
+int ActivateThread(void *arg, int recv_or_send, int waittime)
 {
+	HANDLE thread_handle = NULL;
+	LPWORD thread_id;
+
 	int ret = 0, wait_ret = 0, err_flag = 0;
 	DWORD exit_code;
 
@@ -217,7 +317,7 @@ int ActivateThread(HANDLE thread_handle, LPWORD thread_id, void *arg, int recv_o
 	}
 
 	//wait for the thread with timeout of 15 seconds
-	wait_ret = WaitForSingleObject(thread_handle, SENDRECV_WAITTIME);
+	wait_ret = WaitForSingleObject(thread_handle, waittime);
 
 	//if there is a timeout, terminate the thread and close the thread
 	if (wait_ret == WAIT_TIMEOUT)

@@ -250,16 +250,21 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 	{
 	case ROCK:
 		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "ROCK");
+		break;
 	case PAPER:
 		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "PAPER");
+		break;
 	case SCISSORS:
 		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "SCISSORS");
+		break;
 	case LIZARD:
 		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "LIZARD");
+		break;
 	case SPOCK:
 		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "SPOCK");
+		break;
 	}
-	if (err == 0)
+	if (err != 0)
 	{
 		printf("Error: strcpy failed\n");
 		ret = ERROR_CODE;
@@ -276,6 +281,19 @@ return_ret:
 	return ret;
 }
 
+int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player)
+{
+	//variables
+	char message_type[MAX_MESSAGE];
+	char message_send[MAX_MESSAGE];
+
+
+
+	// find opponent barrier
+
+
+
+}
 
 int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move,
 	char *other_move, int winning_player, int *replay)
@@ -347,7 +365,7 @@ int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
 
-	/*------------------------------- send SERVER_GAME_OVER_MENU ---------------------------------*/
+	/*------------------------------- recive client selection for game over menu ---------------------------------*/
 	packet->array_t = NULL;
 	packet->array_size = 0;
 

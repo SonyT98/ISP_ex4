@@ -44,6 +44,18 @@ int SelectFromMenu(SOCKET sock, int *menu_select);
 int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player);
 
 /*
+* VersusGame set the game of the client against the versus mode.
+* Input Arguments:
+*	sock   - the socket we opend with the client.
+*	player_move_s - the string that include the player move.
+*	opp_move_s - the string that include the cpu move.
+*	winning_player - the winning player: 1 is the player, 2 is the cpu, 0 is a tie.
+* Output:
+*	return -1 if failed, otherwise return the exit code of the thread recv and send.
+*/
+int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player)
+
+/*
 * EndGameStatus gets the player and the second player username and moves, and send the data to the client.
 * In addition update replay if the client want to replay his game.
 * Input Arguments:

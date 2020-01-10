@@ -1,5 +1,7 @@
 #include "GlobalVariables.h"
 
-HANDLE ThreadHandles[MAX_NUM_OF_CLIENTS] = { NULL };
-SOCKET ThreadInputs[MAX_NUM_OF_CLIENTS]  = { INVALID_SOCKET };
+
+
+// find opponent barrier
+HANDLE find_opp_sem[MAX_NUM_CLINTS] = { NULL };
 

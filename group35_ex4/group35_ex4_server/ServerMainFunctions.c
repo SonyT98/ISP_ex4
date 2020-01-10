@@ -42,13 +42,16 @@ int serverMain()
 	}
 	/* The WinSock DLL is acceptable. Proceed. */
 
-	
+	// Initialize the listening socket 
 	retVal = initializeListeningSocket(&acceptParam);
 	if (retVal == ERROR_CODE)
 	{
 		ret = ERROR_CODE;
 		goto server_cleanup_1;
 	}
+	
+	// Initialize all mutex and semaphore 
+	//retVal = initializeSemaphores();
 
 	
 	accept_exit_ThreadHandle[1] = CreateThreadSimple((LPTHREAD_START_ROUTINE)CheckExitThread, &exit_thread_id, NULL);
@@ -200,6 +203,13 @@ cleanup_1:
 	return ret;
 }
 
+int initializeSemaphores()
+{
+	// Initilize Find opponent barrier
+		CreateSemaphore
+
+
+}
 
 static int FindFirstUnusedThreadSlot()
 {

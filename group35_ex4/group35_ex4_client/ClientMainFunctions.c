@@ -39,7 +39,7 @@ int clientMain()
 
 
 	// Send and receive data.
-	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_REQUESTA:NADAVNAVE\n");
+	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_REQUEST:NADAVNAVE\n");
 	send.array_size = strlen(sendMessage);
 	send.array_t = sendMessage;
 	send.sock = client_sock;
@@ -77,7 +77,7 @@ int clientMain()
 	retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
 
 	// pick what to do
-	retVal = sprintf_s(sendMessage, sizeof(sendMessage), "%s", "CLIENT_PLAYER_MOVE:ROOK\n");
+	retVal = sprintf_s(sendMessage, sizeof(sendMessage), "%s", "CLIENT_PLAYER_MOVE:ROCK\n");
 	send.array_size = strlen(sendMessage);
 	send.array_t = sendMessage;
 	send.sock = client_sock;
@@ -91,6 +91,20 @@ int clientMain()
 	if (retVal != 0) { goto client_cleanup_2; }
 	retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
 
+	// get GAME_OVER_MENU
+	recive.array_size = MAX_MESSAGE;
+	recive.array_t = NULL;
+	recive.sock = client_sock;
+	retVal = ActivateThread((void*)&recive, 0, INFINITE);
+	if (retVal != 0) { goto client_cleanup_2; }
+	retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
+
+	// pick what to do
+	retVal = sprintf_s(sendMessage, sizeof(sendMessage), "%s", "CLIENT_PLAYER_MOVE:ROCK\n");
+	send.array_size = strlen(sendMessage);
+	send.array_t = sendMessage;
+	send.sock = client_sock;
+	retVal = ActivateThread((void*)&send, 1, INFINITE);
 
 client_cleanup_2:
 	closesocket(client_sock);

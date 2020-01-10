@@ -28,8 +28,18 @@ static int FindFirstUnusedThreadSlot();
 * Arguments:
 *			acceptParams - pointer to an  AcceptSocketParamsstrut to be update and initialized.
 * Return :
-*	return ERROR_CODE if error accrued, and the index of the slot if found. if not found retuen the Max
+*	return ERROR_CODE if error accrued
 */
 
 int initializeListeningSocket(AcceptSocketParams *acceptParams);
+
+/*
+* This function initialize all global semaphores and mutexes.
+*
+* Return :
+*	return ERROR_CODE if error accrued 
+*/
+int initializeSemaphores();
+
+
 #endif // __SERVERMAINFUNCTIONS_H__

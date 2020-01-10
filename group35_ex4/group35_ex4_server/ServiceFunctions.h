@@ -66,4 +66,16 @@ int MessageCut(char *message, int message_size, char* message_type, char *info);
 *	return -1 if failed, or the exit code of the thread otherwise.
 */
 int ActivateThread(void *arg, int recv_or_send, int waittime);
+
+/*
+* PlayMatch is a function that gets two moves of two players and return the index of the
+* winning player. if there was a tie the function return 0.
+* Input Arguments:
+*	player1_move - the move of the first player.
+*	player2_move - the move of the second player.
+* Output:
+*	return 1 or 2 if the first or second player won accordinly. return 0 if there
+*	is a tie.
+*/
+int PlayMatch(int player1_move, int player2_move);
 #endif // __SERVICEFUNCTIONS_H__

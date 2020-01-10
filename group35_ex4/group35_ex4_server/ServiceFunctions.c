@@ -248,6 +248,8 @@ int CPUGame(SOCKET sock, int *replay)
 	/* Intializes random number generator */
 	srand((unsigned)time(&t));
 
+	cpu_move = rand() % 5 + 1;
+
 
 
 cleanup_memory:

@@ -215,13 +215,13 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 
 	//get the message type and the information
 	err = MessageCut(packet->array_t, packet->array_size, message_type, player_move_s);
-	if (err == ERROR_CODE) { ret = ERROR_CODE; goto cleanup_memory; }
+	if (err == ERROR_CODE) { ret = ERROR_CODE; goto cleanup_array; }
 
 	if (!STRINGS_ARE_EQUAL(message_type, CLIENT_PLAYER_MOVE))
 	{
 		printf("Error: message recieved from the client doesnt match with the protocol\n");
 		ret = ERROR_CODE;
-		goto cleanup_memory;
+		goto cleanup_array;
 	}
 
 	if (STRINGS_ARE_EQUAL(player_move_s, "ROCK"))
@@ -238,10 +238,8 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 	{
 		printf("Error: client move doesnt match with the protocol\n");
 		ret = ERROR_CODE;
-		goto cleanup_memory;
+		goto cleanup_array;
 	}
-
-	free(packet->array_t);
 
 	/*------------------------------- Play CPU match ---------------------------------*/
 	/* Intializes random number generator */
@@ -265,58 +263,62 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 	{
 		printf("Error: strcpy failed\n");
 		ret = ERROR_CODE;
-		goto cleanup_memory;
+		goto cleanup_array;
 	}
 
 	*winning_player = PlayMatch(player_move, cpu_move);
 
+cleanup_array:
+	free(packet->array_t);
 cleanup_memory:
 	free(packet);
 return_ret:
 	return ret;
 }
 
+
 int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move,
 	char *other_move, int winning_player, int *replay)
 {
+	char message_send[MAX_MESSAGE];
+	char message_type[MAX_MESSAGE];
+	char message_info[MAX_MESSAGE];
+
+	sendthread_s *packet;
+
+	int err = 0, ret = 0, exit_code = 0;
+
+	//malloc for the sendthread_s struct
+	packet = (sendthread_s*)malloc(sizeof(sendthread_s));
+	if (packet == NULL)
+	{
+		printf("ERROR: allocate memory for thread arg\n");
+		ret = ERROR_CODE;
+		goto return_ret;
+	}
+
+	//intialize the socket to the thread functions
+	packet->sock = sock;
+
 	/*------------------------------- send SERVER_GAME_RESULT ---------------------------------*/
 	//if the client won
 	if (winning_player == 1)
-	{
-		err = sscanf_s(message_send, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS, sizeof(SERVER_GAME_RESULTS),
-			"CPU", sizeof("CPU"), cpu_move_string, strlen(cpu_move_string) + 1, message_info, strlen(message_info) + 1,
-			username, strlen(username) + 1);
-		if (err == 0 || err == EOF)
-		{
-			printf("Error: can't create the message for the client\n");
-			ret = ERROR_CODE;
-			goto cleanup_memory;
-		}
-	}
+		err = sprint_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
+			other_player, other_move, my_move, username);
 	//if the cpu won
 	else if (winning_player == 2)
-	{
-		err = sscanf_s(message_send, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS, sizeof(SERVER_GAME_RESULTS),
-			"CPU", sizeof("CPU"), cpu_move_string, strlen(cpu_move_string) + 1, message_info, strlen(message_info) + 1,
-			"CPU", sizeof("CPU"));
-		if (err == 0 || err == EOF)
-		{
-			printf("Error: can't create the message for the client\n");
-			ret = ERROR_CODE;
-			goto cleanup_memory;
-		}
-	}
+		err = sprint_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
+			other_player, other_move, my_move, other_player);
+	//else its a tie
 	else
+		err = sprint_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
+			other_player, other_move, my_move, "No one");
+
+	if (err == 0 || err == EOF)
 	{
-		err = sscanf_s(message_send, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS, sizeof(SERVER_GAME_RESULTS),
-			"CPU", sizeof("CPU"), cpu_move_string, strlen(cpu_move_string) + 1, message_info, strlen(message_info) + 1,
-			"No One", sizeof("No one"));
-		if (err == 0 || err == EOF)
-		{
-			printf("Error: can't create the message for the client\n");
-			ret = ERROR_CODE;
-			goto cleanup_memory;
-		}
+		printf("Error: can't create the message for the client\n");
+		ret = ERROR_CODE;
+		goto cleanup_memory;
 	}
 
 	packet->array_t = message_send;
@@ -326,6 +328,58 @@ int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move
 	exit_code = ActivateThread((void*)packet, 1, SENDRECV_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
+
+	/*------------------------------- send SERVER_GAME_OVER_MENU ---------------------------------*/
+	//create the server game over menu message to the client
+	err = sprintf_s(message_send, MAX_MESSAGE, "%s:\n", SERVER_GAME_OVER_MENU);
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: can't create the message for the client\n");
+		ret = ERROR_CODE;
+		goto cleanup_memory;
+	}
+
+	packet->array_t = message_send;
+	packet->array_size = strlen(message_send);
+
+	//activate the send thread and get his exit code
+	exit_code = ActivateThread((void*)packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
+
+	/*------------------------------- send SERVER_GAME_OVER_MENU ---------------------------------*/
+	packet->array_t = NULL;
+	packet->array_size = 0;
+
+	//activate the recv thread and get his exit code
+	exit_code = ActivateThread((void*)packet, 0, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
+
+	//get the message type and the information
+	err = MessageCut(packet->array_t, packet->array_size, message_type, message_info);
+	if (err == ERROR_CODE) { ret = ERROR_CODE; goto main_cleanup1; }
+
+	//check for the message type to update the menu selection
+	if (STRINGS_ARE_EQUAL(message_type, CLIENT_REPLAY))
+		*replay = 1;
+	else if (STRINGS_ARE_EQUAL(message_type, CLIENT_MAIN_MENU))
+		*replay = 0;
+	else
+	{
+		printf("Error: message recieved from the client doesnt match with the protocol\n");
+		ret = ERROR_CODE;
+		goto main_cleanup1;
+	}
+
+
+
+main_cleanup1:
+	free(packet->array_t);
+cleanup_memory:
+	free(packet);
+return_ret:
+	return ret;
 }
 
 

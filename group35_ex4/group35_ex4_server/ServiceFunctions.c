@@ -303,15 +303,15 @@ int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move
 	/*------------------------------- send SERVER_GAME_RESULT ---------------------------------*/
 	//if the client won
 	if (winning_player == 1)
-		err = sprint_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
 			other_player, other_move, my_move, username);
 	//if the cpu won
 	else if (winning_player == 2)
-		err = sprint_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
 			other_player, other_move, my_move, other_player);
 	//else its a tie
 	else
-		err = sprint_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
 			other_player, other_move, my_move, "No one");
 
 	if (err == 0 || err == EOF)

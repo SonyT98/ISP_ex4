@@ -235,7 +235,7 @@ int ActivateThread(void *arg, int recv_or_send, int waittime)
 	}
 
 	//if the thread is runnig correctly, get the exit code
-	err_flag = GetExitCodeThread(thread_handle, exit_code);
+	err_flag = GetExitCodeThread(thread_handle, &exit_code);
 	if (err_flag == 0)
 	{
 		printf("Error while getting exit code from thread\n");

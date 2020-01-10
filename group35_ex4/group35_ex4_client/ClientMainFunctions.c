@@ -39,15 +39,15 @@ int clientMain()
 
 
 	// Send and receive data.
-	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_REQUEST:NADAVNAVE\n");
-	send.array_size = MAX_MESSAGE;
+	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_REQUESTA:NADAVNAVE\n");
+	send.array_size = strlen(sendMessage);
 	send.array_t = sendMessage;
 	send.sock = client_sock;
 	retVal = ActivateThread((void*) &send, 1, INFINITE);
 
 	// get ack
 	recive.array_size = MAX_MESSAGE;
-	recive.array_t = recvMessage;
+	recive.array_t = NULL;
 	recive.sock = client_sock;
 	retVal = ActivateThread((void*)&recive, 0, INFINITE);
 	if (retVal != 0) { goto client_cleanup_2; }
@@ -55,7 +55,7 @@ int clientMain()
 
 	// get main menu
 	recive.array_size = MAX_MESSAGE;
-	recive.array_t = recvMessage;
+	recive.array_t = NULL;
 	recive.sock = client_sock;
 	retVal = ActivateThread((void*)&recive, 0, INFINITE);
 	if (retVal != 0) { goto client_cleanup_2; }
@@ -63,14 +63,14 @@ int clientMain()
 
 	// pick what to do
 	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_CPU:\n");
-	send.array_size = MAX_MESSAGE;
+	send.array_size = strlen(sendMessage);
 	send.array_t = sendMessage;
 	send.sock = client_sock;
 	retVal = ActivateThread((void*)&send, 1, INFINITE);
 
 	// get move
 	recive.array_size = MAX_MESSAGE;
-	recive.array_t = recvMessage;
+	recive.array_t = NULL;
 	recive.sock = client_sock;
 	retVal = ActivateThread((void*)&recive, 0, INFINITE);
 	if (retVal != 0) { goto client_cleanup_2; }
@@ -78,14 +78,14 @@ int clientMain()
 
 	// pick what to do
 	retVal = sprintf_s(sendMessage, sizeof(sendMessage), "%s", "CLIENT_PLAYER_MOVE:ROOK\n");
-	send.array_size = MAX_MESSAGE;
+	send.array_size = strlen(sendMessage);
 	send.array_t = sendMessage;
 	send.sock = client_sock;
 	retVal = ActivateThread((void*)&send, 1, INFINITE);
 
 	// get results
 	recive.array_size = MAX_MESSAGE;
-	recive.array_t = recvMessage;
+	recive.array_t = NULL;
 	recive.sock = client_sock;
 	retVal = ActivateThread((void*)&recive, 0, INFINITE);
 	if (retVal != 0) { goto client_cleanup_2; }

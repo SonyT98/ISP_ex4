@@ -23,7 +23,7 @@ int serverMain()
 	AcceptSocketParams acceptParam;
 
 
-	char recvMessage[MAX_MESSAGE] = "";
+	char recvMessage[MAX_MESSAGE] = {NULL};
 
 	char messageType[MAX_MESSAGE] = "";
 	char messageInfo[MAX_MESSAGE] = "";
@@ -93,20 +93,16 @@ int serverMain()
 	
 		else
 		{
-			(ThreadInputs[Ind]).client_socket = acceptSocket;
+			(ThreadInputs[Ind]).client_socket = acceptParam.AcceptSocket;
 			ThreadInputs[Ind].index = Ind;
 			//ThreadHandles[Ind] = CreateThreadSimple((LPTHREAD_START_ROUTINE)ServiceThread, &(ThreadInputs[Ind]), NULL);
-			//if (accept_exit_ThreadHandle[1] == NULL)
-			//{
-			//	printf("Error creating CheckExitThread\n");
-			//	goto server_cleanup_3;
-			//}
-			recive.array_size = MAX_MESSAGE;
-			recive.array_t = recvMessage;
-			recive.sock = acceptSocket;
-			retVal = ActivateThread((void*)&recive, 0, INFINITE);
-			retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
-		
+			ServiceThread((void*)&(ThreadInputs[Ind]));
+			if (accept_exit_ThreadHandle[1] == NULL)
+			{
+				printf("Error creating CheckExitThread\n");
+				goto server_cleanup_3;
+			}
+
 		}
 	
 	}

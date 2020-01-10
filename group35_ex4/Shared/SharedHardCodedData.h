@@ -23,7 +23,7 @@
 #define USER_WAITTIME 600000
 
 #define SERVER_ADDRESS_STR "127.0.0.1"
-#define SERVER_PORT 8888
+#define SERVER_PORT 8887
 #define CONNECTION_DISCONNECTED 1
 
 /*------------------------- Client Messages ----------------------------------*/

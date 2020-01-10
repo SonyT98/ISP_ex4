@@ -7,11 +7,11 @@ int clientMain()
 	SOCKET client_sock = INVALID_SOCKET;
 	int ret = 0, retVal = 0;
 
-	char sendMassage[MAX_MESSAGE] = {NULL};
-	char recvMassage[MAX_MESSAGE] = "";
+	char sendMessage[MAX_MESSAGE] = {NULL};
+	char recvMessage[MAX_MESSAGE] = "";
 
-	char massageType[MAX_MESSAGE] = "";
-	char massageInfo[MAX_MESSAGE] = "";
+	char messageType[MAX_MESSAGE] = "";
+	char messageInfo[MAX_MESSAGE] = "";
 
 	sendthread_s send;
 	sendthread_s recive;
@@ -39,30 +39,58 @@ int clientMain()
 
 
 	// Send and receive data.
-	retVal = sprintf_s(sendMassage,sizeof(sendMassage),"%s", "CLIENT_REQUEST:nadavnave\n");
+	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_REQUEST:NADAVNAVE\n");
 	send.array_size = MAX_MESSAGE;
-	send.array_t = sendMassage;
+	send.array_t = sendMessage;
 	send.sock = client_sock;
 	retVal = ActivateThread((void*) &send, 1, INFINITE);
+
 	// get ack
 	recive.array_size = MAX_MESSAGE;
-	recive.array_t = sendMassage;
+	recive.array_t = recvMessage;
 	recive.sock = client_sock;
 	retVal = ActivateThread((void*)&recive, 0, INFINITE);
 	if (retVal != 0) { goto client_cleanup_2; }
-	retVal = 
+	retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
+
 	// get main menu
 	recive.array_size = MAX_MESSAGE;
-	recive.array_t = sendMassage;
+	recive.array_t = recvMessage;
 	recive.sock = client_sock;
 	retVal = ActivateThread((void*)&recive, 0, INFINITE);
+	if (retVal != 0) { goto client_cleanup_2; }
+	retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
 
-	// pick choice
-	retVal = sprintf_s(sendMassage,sizeof(sendMassage),"%s", "CLIENT_REQUEST:nadavnave\n");
+	// pick what to do
+	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_CPU:\n");
 	send.array_size = MAX_MESSAGE;
-	send.array_t = sendMassage;
+	send.array_t = sendMessage;
 	send.sock = client_sock;
 	retVal = ActivateThread((void*)&send, 1, INFINITE);
+
+	// get move
+	recive.array_size = MAX_MESSAGE;
+	recive.array_t = recvMessage;
+	recive.sock = client_sock;
+	retVal = ActivateThread((void*)&recive, 0, INFINITE);
+	if (retVal != 0) { goto client_cleanup_2; }
+	retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
+
+	// pick what to do
+	retVal = sprintf_s(sendMessage, sizeof(sendMessage), "%s", "CLIENT_PLAYER_MOVE:ROOK\n");
+	send.array_size = MAX_MESSAGE;
+	send.array_t = sendMessage;
+	send.sock = client_sock;
+	retVal = ActivateThread((void*)&send, 1, INFINITE);
+
+	// get results
+	recive.array_size = MAX_MESSAGE;
+	recive.array_t = recvMessage;
+	recive.sock = client_sock;
+	retVal = ActivateThread((void*)&recive, 0, INFINITE);
+	if (retVal != 0) { goto client_cleanup_2; }
+	retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
+
 
 client_cleanup_2:
 	closesocket(client_sock);

@@ -12,15 +12,23 @@ int serverMain()
 	SOCKET MainSocket = INVALID_SOCKET;
 	unsigned long Address;
 	SOCKADDR_IN service;
-	int bindRes;
-	int ListenRes;
-	int retVal;
+	DWORD bindRes;
+	DWORD ListenRes;
+	DWORD retVal;
 	int ret = 0 ;
 	SOCKET acceptSocket = INVALID_SOCKET;
 
 	LPWORD accept_thread_id, exit_thread_id;
 	HANDLE accept_exit_ThreadHandle[2] = { NULL };
 	AcceptSocketParams acceptParam;
+
+
+	char recvMessage[MAX_MESSAGE] = "";
+
+	char messageType[MAX_MESSAGE] = "";
+	char messageInfo[MAX_MESSAGE] = "";
+
+	sendthread_s recive;
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -87,12 +95,17 @@ int serverMain()
 		{
 			(ThreadInputs[Ind]).client_socket = acceptSocket;
 			ThreadInputs[Ind].index = Ind;
-//			ThreadHandles[Ind] = CreateThreadSimple((LPTHREAD_START_ROUTINE)ServiceThread, &(ThreadInputs[Ind]), NULL);
-			if (accept_exit_ThreadHandle[1] == NULL)
-			{
-				printf("Error creating CheckExitThread\n");
-				goto server_cleanup_3;
-			}
+			//ThreadHandles[Ind] = CreateThreadSimple((LPTHREAD_START_ROUTINE)ServiceThread, &(ThreadInputs[Ind]), NULL);
+			//if (accept_exit_ThreadHandle[1] == NULL)
+			//{
+			//	printf("Error creating CheckExitThread\n");
+			//	goto server_cleanup_3;
+			//}
+			recive.array_size = MAX_MESSAGE;
+			recive.array_t = recvMessage;
+			recive.sock = acceptSocket;
+			retVal = ActivateThread((void*)&recive, 0, INFINITE);
+			retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
 		
 		}
 	

@@ -52,7 +52,7 @@ int ClientUsername(SOCKET sock, char *username)
 
 
 	/*----------------------------send SERVER_APPROVED-----------------------------*/
-	err = sscanf_s(message_send, "%s:\n", SERVER_APPROVED, sizeof(SERVER_APPROVED));
+	err = sprintf_s(message_send,MAX_MESSAGE, "%s:\n", SERVER_APPROVED);
 	if (err == 0 || err == EOF)
 	{
 		printf("Error: can't create the message for the client\n");
@@ -103,7 +103,7 @@ int SelectFromMenu(SOCKET sock, int* menu_select)
 
 
 	/*----------------------------send SERVER_MAIN_MENU-----------------------------*/
-	err = sscanf_s(message_send, "%s:\n", SERVER_MAIN_MENU, sizeof(SERVER_MAIN_MENU));
+	err = sprintf_s(message_send,MAX_MESSAGE ,"%s:\n", SERVER_MAIN_MENU);
 	if (err == 0 || err == EOF)
 	{
 		printf("Error: can't create the message for the client\n");
@@ -160,11 +160,10 @@ return_ret:
 }
 
 
-int CPUGame(SOCKET sock, int *replay)
+int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player)
 {
 	//variables
 	char message_type[MAX_MESSAGE];
-	char message_info[MAX_MESSAGE];
 	char message_send[MAX_MESSAGE];
 
 	sendthread_s *packet;
@@ -188,7 +187,7 @@ int CPUGame(SOCKET sock, int *replay)
 	packet->sock = sock;
 
 	/*----------------------------send SERVER_PLAYER_MOVE_REQUEST-----------------------------*/
-	err = sscanf_s(message_send, "%s:\n", SERVER_PLAYER_MOVE_REQUEST, sizeof(SERVER_PLAYER_MOVE_REQUEST));
+	err = sprintf_s(message_send,MAX_MESSAGE, "%s:\n", SERVER_PLAYER_MOVE_REQUEST);
 	if (err == 0 || err == EOF)
 	{
 		printf("Error: can't create the message for the client\n");
@@ -215,7 +214,7 @@ int CPUGame(SOCKET sock, int *replay)
 	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
 
 	//get the message type and the information
-	err = MessageCut(packet->array_t, packet->array_size, message_type, message_info);
+	err = MessageCut(packet->array_t, packet->array_size, message_type, player_move_s);
 	if (err == ERROR_CODE) { ret = ERROR_CODE; goto cleanup_memory; }
 
 	if (!STRINGS_ARE_EQUAL(message_type, CLIENT_PLAYER_MOVE))
@@ -225,15 +224,15 @@ int CPUGame(SOCKET sock, int *replay)
 		goto cleanup_memory;
 	}
 
-	if (STRINGS_ARE_EQUAL(message_info, "ROCK"))
+	if (STRINGS_ARE_EQUAL(player_move_s, "ROCK"))
 		player_move = ROCK;
-	else if (STRINGS_ARE_EQUAL(message_info, "PAPER"))
+	else if (STRINGS_ARE_EQUAL(player_move_s, "PAPER"))
 		player_move = PAPER;
-	else if (STRINGS_ARE_EQUAL(message_info, "SCISSORS"))
+	else if (STRINGS_ARE_EQUAL(player_move_s, "SCISSORS"))
 		player_move = SCISSORS;
-	else if (STRINGS_ARE_EQUAL(message_info, "LIZARD"))
+	else if (STRINGS_ARE_EQUAL(player_move_s, "LIZARD"))
 		player_move = LIZARD;
-	else if (STRINGS_ARE_EQUAL(message_info, "SPOCK"))
+	else if (STRINGS_ARE_EQUAL(player_move_s, "SPOCK"))
 		player_move = SPOCK;
 	else
 	{
@@ -249,8 +248,27 @@ int CPUGame(SOCKET sock, int *replay)
 	srand((unsigned)time(&t));
 
 	cpu_move = rand() % 5 + 1;
+	switch (cpu_move)
+	{
+	case ROCK:
+		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "ROCK");
+	case PAPER:
+		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "PAPER");
+	case SCISSORS:
+		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "SCISSORS");
+	case LIZARD:
+		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "LIZARD");
+	case SPOCK:
+		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "SPOCK");
+	}
+	if (err == 0)
+	{
+		printf("Error: strcpy failed\n");
+		ret = ERROR_CODE;
+		goto cleanup_memory;
+	}
 
-
+	*winning_player = PlayMatch(player_move, cpu_move);
 
 cleanup_memory:
 	free(packet);
@@ -258,40 +276,56 @@ return_ret:
 	return ret;
 }
 
-
-int MessageCut(char *message, int message_size, char* message_type, char *info)
+int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move,
+	char *other_move, int winning_player, int *replay)
 {
-	int i = 0;
-	int info_or_type = 0;
-	int type_size = 0;
-
-	for (i = 0; i < message_size; i++)
+	/*------------------------------- send SERVER_GAME_RESULT ---------------------------------*/
+	//if the client won
+	if (winning_player == 1)
 	{
-		//if this is a message type
-		if (info_or_type == 0)
+		err = sscanf_s(message_send, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS, sizeof(SERVER_GAME_RESULTS),
+			"CPU", sizeof("CPU"), cpu_move_string, strlen(cpu_move_string) + 1, message_info, strlen(message_info) + 1,
+			username, strlen(username) + 1);
+		if (err == 0 || err == EOF)
 		{
-			message_type[i] = message[i];
-			type_size = i+1;
-			if (message_type[i] == ':')
-			{
-				message_type[i] = '\0';
-				info_or_type = 1;
-			}
+			printf("Error: can't create the message for the client\n");
+			ret = ERROR_CODE;
+			goto cleanup_memory;
 		}
-		//this is a info type
-		else
-			info[i - type_size] = message[i];
 	}
-	//if we didnt got to ':' char this isnt a correct message
-	if (info_or_type == 0)
+	//if the cpu won
+	else if (winning_player == 2)
 	{
-		printf("Error: The message received isn't correct\n");
-		return ERROR_CODE;
+		err = sscanf_s(message_send, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS, sizeof(SERVER_GAME_RESULTS),
+			"CPU", sizeof("CPU"), cpu_move_string, strlen(cpu_move_string) + 1, message_info, strlen(message_info) + 1,
+			"CPU", sizeof("CPU"));
+		if (err == 0 || err == EOF)
+		{
+			printf("Error: can't create the message for the client\n");
+			ret = ERROR_CODE;
+			goto cleanup_memory;
+		}
 	}
-	// set info as string
 	else
-		info[i - type_size-1] = '\0';
-	return 0;
+	{
+		err = sscanf_s(message_send, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS, sizeof(SERVER_GAME_RESULTS),
+			"CPU", sizeof("CPU"), cpu_move_string, strlen(cpu_move_string) + 1, message_info, strlen(message_info) + 1,
+			"No One", sizeof("No one"));
+		if (err == 0 || err == EOF)
+		{
+			printf("Error: can't create the message for the client\n");
+			ret = ERROR_CODE;
+			goto cleanup_memory;
+		}
+	}
+
+	packet->array_t = message_send;
+	packet->array_size = strlen(message_send);
+
+	//activate the send thread and get his exit code
+	exit_code = ActivateThread((void*)packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
 }
 
 

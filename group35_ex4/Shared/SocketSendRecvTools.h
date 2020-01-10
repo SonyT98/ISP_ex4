@@ -114,6 +114,19 @@ DWORD RecvThread(LPSTR lpParam);
 */
 int ActivateThread(void *arg, int recv_or_send, int waittime);
 
+/*
+* Message_cut cutts the received message and to its message type
+* and message information as strings.
+* Input Arguments:
+*	message - the whole message the we recevied.
+*	max_size - the message size.
+*	message_type - the message type that we want to update;
+*	info - the information message we want to update;
+* Output:
+*	return -1 if the message isn't right.
+*/
+int MessageCut(char *message, int message_size, char* message_type, char *info);
+
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 #endif // SOCKET_SEND_RECV_TOOLS_H

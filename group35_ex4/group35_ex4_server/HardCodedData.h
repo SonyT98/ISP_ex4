@@ -2,7 +2,7 @@
 #ifndef __HARDCODEDDATA_H__
 #define __HARDCODEDDATA_H___
 
-#define MAX_NUM_CLINTS 2
+#define MAX_NUM_CLIENTS 2
 
 #define ROCK 1
 #define PAPER 2
@@ -11,7 +11,7 @@
 #define SPOCK 5
 
 #include "SharedHardCodedData.h"
-
+#include "GlobalVariables.h"
 typedef struct
 {
 	SOCKET mainSocket;

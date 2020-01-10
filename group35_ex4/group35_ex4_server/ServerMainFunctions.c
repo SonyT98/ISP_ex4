@@ -1,20 +1,12 @@
 
 #include "ServerMainFunctions.h"
 
-HANDLE ThreadHandles[MAX_NUM_CLINTS];
-ServiceThreadParams ThreadInputs[MAX_NUM_CLINTS];
 
 int serverMain()
 {
 
 	int Ind;
-	int Loop;
-	SOCKET MainSocket = INVALID_SOCKET;
-	unsigned long Address;
-	SOCKADDR_IN service;
-	DWORD bindRes;
-	DWORD ListenRes;
-	DWORD retVal;
+	int retVal;
 	int ret = 0 ;
 	SOCKET acceptSocket = INVALID_SOCKET;
 
@@ -51,7 +43,7 @@ int serverMain()
 	}
 	
 	// Initialize all mutex and semaphore 
-	//retVal = initializeSemaphores();
+	retVal = initializeSemaphores();
 
 	
 	accept_exit_ThreadHandle[1] = CreateThreadSimple((LPTHREAD_START_ROUTINE)CheckExitThread, &exit_thread_id, NULL);
@@ -88,7 +80,7 @@ int serverMain()
 
 
 		Ind = FindFirstUnusedThreadSlot();
-		if (Ind == MAX_NUM_CLINTS) //no slot is available
+		if (Ind == MAX_NUM_CLIENTS) //no slot is available
 		{
 			printf("No slots available for client, dropping the connection.\n");
 			closesocket(acceptSocket); //Closing the socket, dropping the connection.
@@ -123,7 +115,7 @@ server_cleanup_4 :
 server_cleanup_3:
 	//Close all semaphore and Handles!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 server_cleanup_2:
-	if(closesocket(MainSocket) == SOCKET_ERROR)
+	if(closesocket(acceptParam.mainSocket) == SOCKET_ERROR)
 		printf("Failed to close MainSocket, error %ld. Ending program\n", WSAGetLastError());
 
 server_cleanup_1: //Close WINSOCK 
@@ -205,10 +197,30 @@ cleanup_1:
 
 int initializeSemaphores()
 {
-	// Initilize Find opponent barrier
-		CreateSemaphore
 
 
+	// Initialize Find opponent barrier
+	find_opp_sem = CreateSemaphore(NULL, 0, 2, NULL);
+	if (find_opp_sem == NULL)
+	{
+		printf("Error creating find_opp_sem\n");
+		goto cleanup_1;
+	}
+	find_opp_mutex = CreateSemaphore(NULL, 1, 1, NULL);
+	if (find_opp_mutex == NULL)
+	{
+		printf("Error creating find_opp_mutex\n");
+		goto cleanup_2;
+	}
+	
+	// all inits went well
+	return 0;
+
+
+cleanup_2:
+	CloseHandle(find_opp_sem);
+cleanup_1:
+	return ERROR_CODE;
 }
 
 static int FindFirstUnusedThreadSlot()

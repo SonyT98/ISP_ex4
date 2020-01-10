@@ -39,7 +39,7 @@ TransferResult_t SendBuffer( const char* Buffer, int BytesToSend, SOCKET sd );
  * Str - the string to send. 
  * sd - the socket used for communication.
  */ 
-TransferResult_t SendCharArray(const char *Str, SOCKET sd, const int ArraySize);
+TransferResult_t SendCharArray(const char *Str, SOCKET sd, const int *ArraySize);
 
 /**
  * Accepts:

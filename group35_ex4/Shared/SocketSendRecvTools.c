@@ -188,3 +188,66 @@ DWORD WINAPI RecvThread(LPSTR lpParam)
 	}
 	return 0;
 }
+
+/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
+int ActivateThread(void *arg, int recv_or_send, int waittime)
+{
+	HANDLE thread_handle = NULL;
+	LPWORD thread_id;
+
+	int ret = 0, wait_ret = 0, err_flag = 0;
+	DWORD exit_code;
+
+	if (recv_or_send == 0)
+		//call the recevie thread
+		thread_handle = CreateThreadSimple((LPTHREAD_START_ROUTINE)RecvThread, &thread_id, arg);
+	else
+		//call the send thread
+		thread_handle = CreateThreadSimple((LPTHREAD_START_ROUTINE)SendThread, &thread_id, arg);
+
+	//create thread simple failed
+	if (thread_handle == NULL)
+	{
+		printf("Error creating RecvThread\n");
+		ret = ERROR_CODE;
+		goto return_goto;
+	}
+
+	//wait for the thread with timeout of 15 seconds
+	wait_ret = WaitForSingleObject(thread_handle, waittime);
+
+	//if there is a timeout, terminate the thread and close the thread
+	if (wait_ret == WAIT_TIMEOUT)
+	{
+		printf("Error: wait timeout to send the message\n");
+		printf("Terminating thread and exiting\n");
+		err_flag = TerminateThread(thread_handle, exit_code);
+		ret = ERROR_CODE;
+		goto main_cleanup1;
+	}
+	//the wait for signle object failed, close the thread
+	else if (wait_ret != WAIT_OBJECT_0)
+	{
+		printf("Error while waiting using WaitForSingleObject\n");
+		ret = ERROR_CODE;
+		goto main_cleanup1;
+	}
+
+	//if the thread is runnig correctly, get the exit code
+	err_flag = GetExitCodeThread(thread_handle, exit_code);
+	if (err_flag == 0)
+	{
+		printf("Error while getting exit code from thread\n");
+		ret = ERROR_CODE;
+		goto main_cleanup1;
+	}
+
+	ret = exit_code;
+
+
+main_cleanup1:
+	CloseHandle(thread_handle);
+return_goto:
+	return ret;
+}

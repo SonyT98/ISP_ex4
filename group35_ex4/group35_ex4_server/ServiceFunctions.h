@@ -56,18 +56,6 @@ int CPUGame(SOCKET sock, int *replay);
 int MessageCut(char *message, int message_size, char* message_type, char *info);
 
 /*
-* ActivateThread gets a null handle for the thread and activate the specific thread
-* for sending of receving a message.
-* Input Arguments:
-*	arg			  - an argument for the thread function.
-*	recv_or_send  - zero if we recevie and 1 if we send.
-*	waittime	  - the wait time of the thread.
-* Output:
-*	return -1 if failed, or the exit code of the thread otherwise.
-*/
-int ActivateThread(void *arg, int recv_or_send, int waittime);
-
-/*
 * PlayMatch is a function that gets two moves of two players and return the index of the
 * winning player. if there was a tie the function return 0.
 * Input Arguments:

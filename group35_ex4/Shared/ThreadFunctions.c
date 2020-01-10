@@ -70,3 +70,5 @@ int CloseThreads(HANDLE* p_thread_handles, int last_thread)
 	}
 	return return_num;
 }
+
+

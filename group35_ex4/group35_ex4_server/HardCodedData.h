@@ -4,6 +4,11 @@
 
 #define MAX_NUM_CLINTS 2
 
+#define ROCK 1
+#define PAPER 2
+#define SCISSORS 3
+#define LIZARD 4
+#define SPOCK 5
 
 #include "SharedHardCodedData.h"
 

@@ -102,6 +102,18 @@ DWORD SendThread(LPSTR lpParam);
 */
 DWORD RecvThread(LPSTR lpParam);
 
+/*
+* ActivateThread gets a null handle for the thread and activate the specific thread
+* for sending of receving a message.
+* Input Arguments:
+*	arg			  - an argument for the thread function.
+*	recv_or_send  - zero if we recevie and 1 if we send.
+*	waittime	  - the wait time of the thread.
+* Output:
+*	return -1 if failed, or the exit code of the thread otherwise.
+*/
+int ActivateThread(void *arg, int recv_or_send, int waittime);
+
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 #endif // SOCKET_SEND_RECV_TOOLS_H

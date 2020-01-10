@@ -226,15 +226,15 @@ int CPUGame(SOCKET sock, int *replay)
 	}
 
 	if (STRINGS_ARE_EQUAL(message_info, "ROCK"))
-		player_move = 1;
+		player_move = ROCK;
 	else if (STRINGS_ARE_EQUAL(message_info, "PAPER"))
-		player_move = 2;
+		player_move = PAPER;
 	else if (STRINGS_ARE_EQUAL(message_info, "SCISSORS"))
-		player_move = 3;
+		player_move = SCISSORS;
 	else if (STRINGS_ARE_EQUAL(message_info, "LIZARD"))
-		player_move = 4;
+		player_move = LIZARD;
 	else if (STRINGS_ARE_EQUAL(message_info, "SPOCK"))
-		player_move = 5;
+		player_move = SPOCK;
 	else
 	{
 		printf("Error: client move doesnt match with the protocol\n");
@@ -295,63 +295,71 @@ int MessageCut(char *message, int message_size, char* message_type, char *info)
 }
 
 
-int ActivateThread(void *arg, int recv_or_send, int waittime)
+int PlayMatch(int player1_move, int player2_move)
 {
-	HANDLE thread_handle = NULL;
-	LPWORD thread_id;
-
-	int ret = 0, wait_ret = 0, err_flag = 0;
-	DWORD exit_code;
-
-	if (recv_or_send == 0)
-		//call the recevie thread
-		thread_handle = CreateThreadSimple((LPTHREAD_START_ROUTINE)RecvThread, &thread_id, arg);
+	//if the first player is a rock
+	if (player1_move == ROCK)
+	{
+		//beats scissors and lizard
+		if (player2_move == SCISSORS || player2_move == LIZARD)
+			return 1;
+		//beaten by paper and spock
+		else if (player2_move == SPOCK || player2_move == PAPER)
+			return 2;
+		//a tie
+		else
+			return 0;
+	}
+	//if the first player is a paper
+	else if (player1_move == PAPER)
+	{
+		//beats rock and spock
+		if (player2_move == ROCK || player2_move == SPOCK)
+			return 1;
+		//beaten by lizard and scissors
+		else if (player2_move == LIZARD || player2_move == SCISSORS)
+			return 2;
+		//a tie
+		else
+			return 0;
+	}
+	//if the first player is scissors
+	else if (player1_move == SCISSORS)
+	{
+		//beats paper and lizard
+		if (player2_move == PAPER || player2_move == LIZARD)
+			return 1;
+		//beaten by rock and spock
+		else if (player2_move == ROCK || player2_move == SPOCK)
+			return 2;
+		//a tie
+		else
+			return 0;
+	}
+	//if the first player is a lizard
+	else if (player1_move == LIZARD)
+	{
+		//beats paper and spock
+		if (player2_move == PAPER || player2_move == SPOCK)
+			return 1;
+		//beaten by rock and scissors
+		else if (player2_move == ROCK || player2_move == SCISSORS)
+			return 2;
+		//a tie
+		else
+			return 0;
+	}
+	//if the first player is a spock
 	else
-		//call the send thread
-		thread_handle = CreateThreadSimple((LPTHREAD_START_ROUTINE)SendThread, &thread_id, arg);
-
-	//create thread simple failed
-	if (thread_handle == NULL)
 	{
-		printf("Error creating RecvThread\n");
-		ret = ERROR_CODE;
-		goto return_goto;
+		//beats scissors and rock
+		if (player2_move == SCISSORS || player2_move == ROCK)
+			return 1;
+		//beaten by paper and lizard
+		else if (player2_move == LIZARD || player2_move == PAPER)
+			return 2;
+		//a tie
+		else
+			return 0;
 	}
-
-	//wait for the thread with timeout of 15 seconds
-	wait_ret = WaitForSingleObject(thread_handle, waittime);
-
-	//if there is a timeout, terminate the thread and close the thread
-	if (wait_ret == WAIT_TIMEOUT)
-	{
-		printf("Error: wait timeout to send the message\n");
-		printf("Terminating thread and exiting\n");
-		err_flag = TerminateThread(thread_handle, exit_code);
-		ret = ERROR_CODE;
-		goto main_cleanup1;
-	}
-	//the wait for signle object failed, close the thread
-	else if (wait_ret != WAIT_OBJECT_0)
-	{
-		printf("Error while waiting using WaitForSingleObject\n");
-		ret = ERROR_CODE;
-		goto main_cleanup1;
-	}
-
-	//if the thread is runnig correctly, get the exit code
-	err_flag = GetExitCodeThread(thread_handle, exit_code);
-	if (err_flag == 0)
-	{
-		printf("Error while getting exit code from thread\n");
-		ret = ERROR_CODE;
-		goto main_cleanup1;
-	}
-
-	ret = exit_code;
-
-
-main_cleanup1:
-	CloseHandle(thread_handle);
-return_goto:
-	return ret;
 }

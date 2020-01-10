@@ -10,13 +10,6 @@ ClientThreadParams threds_param[MAX_NUM_CLINTS];
 int serverMain()
 {
 
-	int Ind;
-	int Loop;
-	SOCKET MainSocket = INVALID_SOCKET;
-	unsigned long Address;
-	SOCKADDR_IN service;
-	int bindRes;
-	int ListenRes;
 	int retVal;
 	int ret = 0 ;
 	SOCKET acceptSocket = INVALID_SOCKET;

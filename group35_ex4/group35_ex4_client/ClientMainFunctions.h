@@ -2,6 +2,8 @@
 #ifndef __CLIENTMAINFUNCTIONS_H__
 #define __CLENTMAINFUNCTIONS_H__
 
+#include "ThreadFunctions.h"
+
 
 /*
 * this is the main function of the client

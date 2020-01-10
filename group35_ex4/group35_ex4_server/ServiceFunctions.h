@@ -56,6 +56,16 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player);
 
 /*
+* exeute a barrier to find if another oppenent wants to play
+* Output:
+*	return OPPONENT_FOUND			1	- if another opponent logged in
+*	return OPPONENT_WASENT_FOUND	2   - if no opponent has logged
+*	return ERROR_CODE			   -1	- if an error accrued
+*/
+int findOpponentBarrier();
+
+
+/*
 * EndGameStatus gets the player and the second player username and moves, and send the data to the client.
 * In addition update replay if the client want to replay his game.
 * Input Arguments:

@@ -10,6 +10,11 @@
 #define LIZARD 4
 #define SPOCK 5
 
+#define WAIT_FOR_OPP_TIME 30000
+
+#define OPPONENT_FOUND  1
+#define OPPONENT_WASENT_FOUND 2 
+
 #include "SharedHardCodedData.h"
 #include "GlobalVariables.h"
 typedef struct

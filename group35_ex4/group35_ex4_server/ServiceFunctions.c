@@ -209,18 +209,110 @@ return_ret:
 
 int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player)
 {
+	
 	//variables
 	char message_type[MAX_MESSAGE];
 	char message_send[MAX_MESSAGE];
+	
+	int retVal = 0, err = 0, exit_code =0;
 
-
+	sendthread_s packet;
 
 	// find opponent barrier
+	retVal = findOpponentBarrier();
 
+	if (retVal = ERROR_CODE) return ERROR_CODE;
 
+	else if (retVal == OPPONENT_WASENT_FOUND)
+	{
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:\n", SERVER_NO_OPPONENTS);
+		if (err == 0 || err == EOF)
+		{
+			printf("Error: can't create the message for the client\n");
+			return ERROR_CODE;
+		}
+		packet.array_t = message_send;
+		packet.array_size = strlen(message_send);
+
+		//activate the send thread and get his exit code
+		exit_code = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
+		//if the thread setup failed or the thread function itself failed
+		if (exit_code != 0)  return exit_code;
+
+	}
 
 }
 
+int findOpponentBarrier()
+{
+	DWORD wait_code;
+	BOOL ret_val;
+	int ret = 0;
+
+	wait_code = WaitForSingleObject(find_opp_mutex, INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for find_opp_mutex\n");
+		return ERROR_CODE;
+	}
+	
+	/* critical section */
+	barrier_count = barrier_count + 1;
+
+	if (barrier_count == MAX_NUM_CLIENTS)
+	{
+		// if this is the last thread to reach the barrier release all.
+		ret_val = ReleaseSemaphore(find_opp_sem, MAX_NUM_CLIENTS, NULL);
+		if (FALSE == ret_val)
+		{
+			printf("Error when releasing find_opp_sem\n");
+			
+			ret = ERROR_CODE;
+		}
+	}
+
+	ret_val = ReleaseMutex(find_opp_mutex);
+	if (FALSE == ret_val)
+	{
+		printf("Error when releasing find_opp_mutex\n");
+		return ERROR_CODE;
+	}
+
+	// if the up barrier_sem failed, return ERROR_CODE
+	if (ret == ERROR_CODE)
+		return ERROR_CODE;
+
+	wait_code = WaitForSingleObject(find_opp_sem, INFINITE); // Need to change the timeout to 30 sec
+
+	if (WAIT_OBJECT_0 == wait_code)		return OPPONENT_FOUND;
+	else if (WAIT_TIMEOUT == wait_code)
+	{
+		// reset the count if no opponent found
+		wait_code = WaitForSingleObject(find_opp_mutex, INFINITE);
+		if (WAIT_OBJECT_0 != wait_code)
+		{
+			printf("Error when waiting for find_opp_mutex\n");
+			return ERROR_CODE;
+		}
+
+		/* critical section */
+		barrier_count = 0;
+		ret_val = ReleaseMutex(find_opp_mutex);
+		if (FALSE == ret_val)
+		{
+			printf("Error when releasing find_opp_mutex\n");
+			return ERROR_CODE;
+		}
+
+		return OPPONENT_WASENT_FOUND;
+	}
+	else
+	{
+		printf("Error when waiting for find_opp_sem\n");
+		return ERROR_CODE;
+	}
+
+}
 
 int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move,
 	char *other_move, int winning_player, int *replay)

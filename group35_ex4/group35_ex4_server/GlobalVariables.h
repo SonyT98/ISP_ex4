@@ -12,6 +12,7 @@ ServiceThreadParams ThreadInputs[MAX_NUM_CLIENTS];
 // find opponent barirer semaphre
 HANDLE find_opp_sem;
 HANDLE find_opp_mutex;
+int barrier_count;
 
 #endif // __GLOBALVARIABLES_H__
 

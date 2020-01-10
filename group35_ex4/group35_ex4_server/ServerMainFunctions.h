@@ -41,5 +41,11 @@ int initializeListeningSocket(AcceptSocketParams *acceptParams);
 */
 int initializeSemaphores();
 
+/*
+* This function closes all global semaphore and mutexes
+*/
+void closeSemaphores();
+
+
 
 #endif // __SERVERMAINFUNCTIONS_H__

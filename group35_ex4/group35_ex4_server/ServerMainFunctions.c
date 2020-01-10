@@ -44,7 +44,11 @@ int serverMain()
 	
 	// Initialize all mutex and semaphore 
 	retVal = initializeSemaphores();
-
+	if (retVal == ERROR_CODE)
+	{
+		ret = ERROR_CODE;
+		goto server_cleanup_2;
+	}
 	
 	accept_exit_ThreadHandle[1] = CreateThreadSimple((LPTHREAD_START_ROUTINE)CheckExitThread, &exit_thread_id, NULL);
 	if (accept_exit_ThreadHandle[1] == NULL)
@@ -113,7 +117,7 @@ server_cleanup_4 :
 	// close exitThreadHandle	
 	CloseHandle(accept_exit_ThreadHandle[1]);
 server_cleanup_3:
-	//Close all semaphore and Handles!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	closeSemaphores();
 server_cleanup_2:
 	if(closesocket(acceptParam.mainSocket) == SOCKET_ERROR)
 		printf("Failed to close MainSocket, error %ld. Ending program\n", WSAGetLastError());
@@ -206,6 +210,7 @@ int initializeSemaphores()
 		printf("Error creating find_opp_sem\n");
 		goto cleanup_1;
 	}
+
 	find_opp_mutex = CreateSemaphore(NULL, 1, 1, NULL);
 	if (find_opp_mutex == NULL)
 	{
@@ -213,6 +218,7 @@ int initializeSemaphores()
 		goto cleanup_2;
 	}
 	
+
 	// all inits went well
 	return 0;
 
@@ -246,4 +252,11 @@ static int FindFirstUnusedThreadSlot()
 	}
 
 	return Ind;
+}
+
+void closeSemaphores()
+{
+
+	CloseHandle(find_opp_mutex);
+	CloseHandle(find_opp_sem);
 }

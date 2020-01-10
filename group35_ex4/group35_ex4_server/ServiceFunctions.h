@@ -35,25 +35,30 @@ int SelectFromMenu(SOCKET sock, int *menu_select);
 * CPUGame set the game of the client against the cpu.
 * Input Arguments:
 *	sock   - the socket we opend with the client.
-*	replay - an index to the server function to replay the game.
+*	player_move_s - the string that include the player move.
+*	cpu_move_s - the string that include the cpu move.
+*	winning_player - the winning player: 1 is the player, 2 is the cpu, 0 is a tie.
 * Output:
 *	return -1 if failed, otherwise return the exit code of the thread recv and send.
 */
-int CPUGame(SOCKET sock, int *replay);
-
+int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player);
 
 /*
-* Message_cut cutts the received message and to its message type
-* and message information as strings.
+* EndGameStatus gets the player and the second player username and moves, and send the data to the client.
+* In addition update replay if the client want to replay his game.
 * Input Arguments:
-*	message - the whole message the we recevied.
-*	max_size - the message size.
-*	message_type - the message type that we want to update;
-*	info - the information message we want to update;
+*	sock   - the socket we opend with the client.
+*	username - the player username.
+*	other_player - the username of the second player.
+*	my_move - string of the client move.
+*	other_move - string of the other player move.
+*	winning_player - the winning player: 1 is the client, 2 is the other player, 0 is a tie.
+*	replay - if the client want to play again.
 * Output:
-*	return -1 if the message isn't right.
+*	return -1 if failed, otherwise return the exit code of the thread recv and send.
 */
-int MessageCut(char *message, int message_size, char* message_type, char *info);
+int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move, 
+	char *other_move, int winning_player, int *replay);
 
 /*
 * PlayMatch is a function that gets two moves of two players and return the index of the

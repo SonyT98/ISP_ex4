@@ -251,3 +251,40 @@ main_cleanup1:
 return_goto:
 	return ret;
 }
+
+/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
+int MessageCut(char *message, int message_size, char* message_type, char *info)
+{
+	int i = 0;
+	int info_or_type = 0;
+	int type_size = 0;
+
+	for (i = 0; i < message_size; i++)
+	{
+		//if this is a message type
+		if (info_or_type == 0)
+		{
+			message_type[i] = message[i];
+			type_size = i + 1;
+			if (message_type[i] == ':')
+			{
+				message_type[i] = '\0';
+				info_or_type = 1;
+			}
+		}
+		//this is a info type
+		else
+			info[i - type_size] = message[i];
+	}
+	//if we didnt got to ':' char this isnt a correct message
+	if (info_or_type == 0)
+	{
+		printf("Error: The message received isn't correct\n");
+		return ERROR_CODE;
+	}
+	// set info as string
+	else
+		info[i - type_size - 1] = '\0';
+	return 0;
+}

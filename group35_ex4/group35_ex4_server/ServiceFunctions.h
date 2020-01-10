@@ -53,7 +53,7 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 * Output:
 *	return -1 if failed, otherwise return the exit code of the thread recv and send.
 */
-int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player)
+int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player);
 
 /*
 * EndGameStatus gets the player and the second player username and moves, and send the data to the client.
@@ -71,6 +71,18 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 */
 int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move, 
 	char *other_move, int winning_player, int *replay);
+
+/*
+* GetMoveFromClient send to the client to pick the move he wants, and return his move.
+* Input Arguments:
+*	sock   - the socket we opend with the client.
+*	player_move_s - the string that include the player move.
+*	player_move - the move number of the client.
+* Output:
+*	return -1 if failed, otherwise return the exit code of the thread recv and send.
+*/
+int GetMoveFromClient(SOCKET sock, char* player_move_s, int *player_move);
+
 
 /*
 * PlayMatch is a function that gets two moves of two players and return the index of the

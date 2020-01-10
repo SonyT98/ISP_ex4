@@ -162,84 +162,13 @@ return_ret:
 
 int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player)
 {
-	//variables
-	char message_type[MAX_MESSAGE];
-	char message_send[MAX_MESSAGE];
-
-	sendthread_s *packet;
-
-	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
 	int player_move = 0, cpu_move = 0;
+	int err = 0, ret = 0;
 
 	time_t t;
 
-
-	//malloc for the sendthread_s struct
-	packet = (sendthread_s*)malloc(sizeof(sendthread_s));
-	if (packet == NULL)
-	{
-		printf("ERROR: allocate memory for thread arg\n");
-		ret = ERROR_CODE;
-		goto return_ret;
-	}
-
-	//intialize the socket to the thread functions
-	packet->sock = sock;
-
-	/*----------------------------send SERVER_PLAYER_MOVE_REQUEST-----------------------------*/
-	err = sprintf_s(message_send,MAX_MESSAGE, "%s:\n", SERVER_PLAYER_MOVE_REQUEST);
-	if (err == 0 || err == EOF)
-	{
-		printf("Error: can't create the message for the client\n");
-		ret = ERROR_CODE;
-		goto cleanup_memory;
-	}
-
-	packet->array_t = message_send;
-	packet->array_size = strlen(message_send);
-
-	//activate the send thread and get his exit code
-	exit_code = ActivateThread((void*)packet, 1, SENDRECV_WAITTIME);
-	//if the thread setup failed or the thread function itself failed
-	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
-
-
-	/*-------------------------------recv CLIENT_PLAYER_MOVE---------------------------------*/
-	packet->array_t = NULL;
-	packet->array_size = 0;
-
-	//activate the recv thread and get his exit code
-	exit_code = ActivateThread((void*)packet, 0, USER_WAITTIME);
-	//if the thread setup failed or the thread function itself failed
-	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
-
-	//get the message type and the information
-	err = MessageCut(packet->array_t, packet->array_size, message_type, player_move_s);
-	if (err == ERROR_CODE) { ret = ERROR_CODE; goto cleanup_array; }
-
-	if (!STRINGS_ARE_EQUAL(message_type, CLIENT_PLAYER_MOVE))
-	{
-		printf("Error: message recieved from the client doesnt match with the protocol\n");
-		ret = ERROR_CODE;
-		goto cleanup_array;
-	}
-
-	if (STRINGS_ARE_EQUAL(player_move_s, "ROCK"))
-		player_move = ROCK;
-	else if (STRINGS_ARE_EQUAL(player_move_s, "PAPER"))
-		player_move = PAPER;
-	else if (STRINGS_ARE_EQUAL(player_move_s, "SCISSORS"))
-		player_move = SCISSORS;
-	else if (STRINGS_ARE_EQUAL(player_move_s, "LIZARD"))
-		player_move = LIZARD;
-	else if (STRINGS_ARE_EQUAL(player_move_s, "SPOCK"))
-		player_move = SPOCK;
-	else
-	{
-		printf("Error: client move doesnt match with the protocol\n");
-		ret = ERROR_CODE;
-		goto cleanup_array;
-	}
+	err = GetMoveFromClient(sock, player_move_s, &player_move);
+	if (err != 0) { ret = err;  goto return_ret; }
 
 	/*------------------------------- Play CPU match ---------------------------------*/
 	/* Intializes random number generator */
@@ -268,18 +197,15 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 	{
 		printf("Error: strcpy failed\n");
 		ret = ERROR_CODE;
-		goto cleanup_array;
+		goto return_ret;
 	}
 
 	*winning_player = PlayMatch(player_move, cpu_move);
 
-cleanup_array:
-	free(packet->array_t);
-cleanup_memory:
-	free(packet);
 return_ret:
 	return ret;
 }
+
 
 int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player)
 {
@@ -294,6 +220,7 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 
 
 }
+
 
 int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move,
 	char *other_move, int winning_player, int *replay)
@@ -393,6 +320,93 @@ int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move
 
 
 main_cleanup1:
+	free(packet->array_t);
+cleanup_memory:
+	free(packet);
+return_ret:
+	return ret;
+}
+
+
+int GetMoveFromClient(SOCKET sock, char* player_move_s, int *player_move)
+{
+	//variables
+	char message_type[MAX_MESSAGE];
+	char message_send[MAX_MESSAGE];
+
+	sendthread_s *packet;
+
+	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
+
+
+	//malloc for the sendthread_s struct
+	packet = (sendthread_s*)malloc(sizeof(sendthread_s));
+	if (packet == NULL)
+	{
+		printf("ERROR: allocate memory for thread arg\n");
+		ret = ERROR_CODE;
+		goto return_ret;
+	}
+
+	//intialize the socket to the thread functions
+	packet->sock = sock;
+
+	/*----------------------------send SERVER_PLAYER_MOVE_REQUEST-----------------------------*/
+	err = sprintf_s(message_send, MAX_MESSAGE, "%s:\n", SERVER_PLAYER_MOVE_REQUEST);
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: can't create the message for the client\n");
+		ret = ERROR_CODE;
+		goto cleanup_memory;
+	}
+
+	packet->array_t = message_send;
+	packet->array_size = strlen(message_send);
+
+	//activate the send thread and get his exit code
+	exit_code = ActivateThread((void*)packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
+
+
+	/*-------------------------------recv CLIENT_PLAYER_MOVE---------------------------------*/
+	packet->array_t = NULL;
+	packet->array_size = 0;
+
+	//activate the recv thread and get his exit code
+	exit_code = ActivateThread((void*)packet, 0, USER_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
+
+	//get the message type and the information
+	err = MessageCut(packet->array_t, packet->array_size, message_type, player_move_s);
+	if (err == ERROR_CODE) { ret = ERROR_CODE; goto cleanup_array; }
+
+	if (!STRINGS_ARE_EQUAL(message_type, CLIENT_PLAYER_MOVE))
+	{
+		printf("Error: message recieved from the client doesnt match with the protocol\n");
+		ret = ERROR_CODE;
+		goto cleanup_array;
+	}
+
+	if (STRINGS_ARE_EQUAL(player_move_s, "ROCK"))
+		*player_move = ROCK;
+	else if (STRINGS_ARE_EQUAL(player_move_s, "PAPER"))
+		*player_move = PAPER;
+	else if (STRINGS_ARE_EQUAL(player_move_s, "SCISSORS"))
+		*player_move = SCISSORS;
+	else if (STRINGS_ARE_EQUAL(player_move_s, "LIZARD"))
+		*player_move = LIZARD;
+	else if (STRINGS_ARE_EQUAL(player_move_s, "SPOCK"))
+		*player_move = SPOCK;
+	else
+	{
+		printf("Error: client move doesnt match with the protocol\n");
+		ret = ERROR_CODE;
+		goto cleanup_array;
+	}
+
+cleanup_array:
 	free(packet->array_t);
 cleanup_memory:
 	free(packet);

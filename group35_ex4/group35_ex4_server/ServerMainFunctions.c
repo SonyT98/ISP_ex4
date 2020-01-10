@@ -1,6 +1,4 @@
 
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
 #include "ServerMainFunctions.h"
 
 HANDLE ThreadHandles[MAX_NUM_CLINTS];
@@ -38,7 +36,7 @@ int serverMain()
 
 	
 	retVal = initializeListeningSocket(&acceptParam);
-	if (retVal = ERROR_CODE)
+	if (retVal == ERROR_CODE)
 	{
 		ret = ERROR_CODE;
 		goto server_cleanup_1;
@@ -89,7 +87,7 @@ int serverMain()
 		{
 			(ThreadInputs[Ind]).client_socket = acceptSocket;
 			ThreadInputs[Ind].index = Ind;
-			ThreadHandles[Ind] = CreateThreadSimple((LPTHREAD_START_ROUTINE)ServiceThread, &(ThreadInputs[Ind]), NULL);
+//			ThreadHandles[Ind] = CreateThreadSimple((LPTHREAD_START_ROUTINE)ServiceThread, &(ThreadInputs[Ind]), NULL);
 			if (accept_exit_ThreadHandle[1] == NULL)
 			{
 				printf("Error creating CheckExitThread\n");

@@ -197,7 +197,7 @@ int ActivateThread(void *arg, int recv_or_send, int waittime)
 	LPWORD thread_id;
 
 	int ret = 0, wait_ret = 0, err_flag = 0;
-	DWORD exit_code;
+	DWORD exit_code = 0;
 
 	if (recv_or_send == 0)
 		//call the recevie thread

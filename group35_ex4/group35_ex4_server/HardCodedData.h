@@ -19,6 +19,8 @@ typedef struct
 	SOCKET	client_socket;
 	int		index;
 
-}ClientThreadParams;
+}ServiceThreadParams;
+
+
 
 #endif // __HARDCODEDDATA_H___

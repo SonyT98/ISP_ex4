@@ -4,7 +4,7 @@
 #include "ServerMainFunctions.h"
 
 HANDLE ThreadHandles[MAX_NUM_CLINTS];
-ClientThreadParams threds_param[MAX_NUM_CLINTS];
+ServiceThreadParams ThreadInputs[MAX_NUM_CLINTS];
 
 int serverMain()
 {
@@ -77,9 +77,6 @@ int serverMain()
 			break;
 		}
 
-		// exit if Exit thread return
-
-		printf("Client Connected.\n");
 
 		Ind = FindFirstUnusedThreadSlot();
 		if (Ind == MAX_NUM_CLINTS) //no slot is available
@@ -88,10 +85,18 @@ int serverMain()
 			closesocket(acceptSocket); //Closing the socket, dropping the connection.
 		}
 	
-	
-	
-	
-	
+		else
+		{
+			(ThreadInputs[Ind]).client_socket = acceptSocket;
+			ThreadInputs[Ind].index = Ind;
+			ThreadHandles[Ind] = CreateThreadSimple((LPTHREAD_START_ROUTINE)ServiceThread, &(ThreadInputs[Ind]), NULL);
+			if (accept_exit_ThreadHandle[1] == NULL)
+			{
+				printf("Error creating CheckExitThread\n");
+				goto server_cleanup_3;
+			}
+		
+		}
 	
 	}
 
@@ -116,7 +121,6 @@ server_cleanup_1: //Close WINSOCK
 		printf("Failed to close Winsocket, error %ld. Ending program.\n", WSAGetLastError());
 	return ret; 
 }
-
 
 
 int initializeListeningSocket(AcceptSocketParams *acceptParams)
@@ -188,11 +192,6 @@ cleanup_1:
 
 	return ret;
 }
-
-
-
-
-
 
 
 static int FindFirstUnusedThreadSlot()

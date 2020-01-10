@@ -15,8 +15,7 @@ int serverMain()
 	AcceptSocketParams acceptParam;
 
 
-	char recvMessage[MAX_MESSAGE] = {NULL};
-
+	char recvMessage[MAX_MESSAGE] = "";
 	char messageType[MAX_MESSAGE] = "";
 	char messageInfo[MAX_MESSAGE] = "";
 
@@ -217,12 +216,35 @@ int initializeSemaphores()
 		printf("Error creating find_opp_mutex\n");
 		goto cleanup_2;
 	}
-	
 
+	com_file_mutex = CreateMutex(NULL, FALSE, NULL);
+	if (com_file_mutex == NULL)
+	{
+		printf("Error creating com_file_mutex\n");
+		goto cleanup_3;
+	}
+
+	com_sem[0] = CreateSemaphore(NULL, 0, 1, NULL);
+	if (com_sem[0] == NULL)
+	{
+		printf("Error creating com_sem[0]\n");
+		goto cleanup_4;
+	}
+	com_sem[1] = CreateSemaphore(NULL, 0, 1, NULL);
+	if (com_sem[1] == NULL)
+	{
+		printf("Error creating com_sem[1]\n");
+		goto cleanup_5;
+	}
 	// all inits went well
 	return 0;
 
-
+cleanup_5:
+	CloseHandle(com_sem[0]);
+cleanup_4:
+	CloseHandle(com_file_mutex);
+cleanup_3:
+	CloseHandle(find_opp_mutex);
 cleanup_2:
 	CloseHandle(find_opp_sem);
 cleanup_1:
@@ -233,7 +255,7 @@ static int FindFirstUnusedThreadSlot()
 {
 	int Ind;
 
-	for (Ind = 0; Ind < MAX_NUM_CLINTS; Ind++)
+	for (Ind = 0; Ind < MAX_NUM_CLIENTS; Ind++)
 	{
 		if (ThreadHandles[Ind] == NULL)
 			break;
@@ -257,6 +279,9 @@ static int FindFirstUnusedThreadSlot()
 void closeSemaphores()
 {
 
+	CloseHandle(com_sem[1]);
+	CloseHandle(com_sem[0]);
+	CloseHandle(com_file_mutex);
 	CloseHandle(find_opp_mutex);
 	CloseHandle(find_opp_sem);
 }

@@ -214,7 +214,11 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 	char message_type[MAX_MESSAGE];
 	char message_send[MAX_MESSAGE];
 	
-	int retVal = 0, err = 0, exit_code =0;
+	int retVal = 0, err = 0, exit_code =0, flag = 0;
+
+	int player_move, wait_code;
+	int opponent_mov = -1;
+	char opponent_move_s[10] = "";
 
 	sendthread_s packet;
 
@@ -222,7 +226,7 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 	retVal = findOpponentBarrier();
 
 	if (retVal = ERROR_CODE) return ERROR_CODE;
-
+	// Opponent wasn't found
 	else if (retVal == OPPONENT_WASENT_FOUND)
 	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s:\n", SERVER_NO_OPPONENTS);
@@ -238,9 +242,104 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 		exit_code = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
 		//if the thread setup failed or the thread function itself failed
 		if (exit_code != 0)  return exit_code;
-
+		return 0;
 	}
+	else
+	{
+		// Opponent found
+		flag = MakeSureFileExist();
+		if (flag == ERROR_CODE) return ERROR_CODE;
 
+		if (flag == 1) // the file was already open
+		{
+			/* Ask client for his move */
+			err = GetMoveFromClient(sock, player_move_s, &player_move);
+			if (err != 0) return err;
+			
+			/* Write move to GameSession.txt */
+			retVal = ReadOrWriteToGameSassionFile(player_move_s, &player_move, WRITE_TO_GAMESESSION);
+
+			/* Signal opponent thread */
+			retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
+			if (FALSE == retVal)
+			{
+				printf("Error when releasing find_opp_sem\n");
+
+				return ERROR_CODE;
+			}
+
+			/* Wait opponent thread */
+			wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
+			if (WAIT_OBJECT_0 != wait_code)
+			{
+				printf("Error when waiting for com_sem[0]\n");
+				return ERROR_CODE;
+			}
+
+			/* Read Opponent Move */
+			retVal = ReadOrWriteToGameSassionFile(opponent_move_s, &opponent_mov, READ_FROM_GAMESESSION);
+			
+			/* Signal opponent thread */
+			retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
+			if (FALSE == retVal)
+			{
+				printf("Error when releasing find_opp_sem\n");
+
+				return ERROR_CODE;
+			}
+
+		}
+		else // i opened the file
+		{
+
+			/* Ask client for his move */
+			err = GetMoveFromClient(sock, player_move_s, &player_move);
+			if (err != 0) return err;
+
+			/* Wait opponent thread */
+			wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
+			if (WAIT_OBJECT_0 != wait_code)
+			{
+				printf("Error when waiting for com_sem[0]\n");
+				return ERROR_CODE;
+			}
+
+			/* Read Opponent Move */
+			retVal = ReadOrWriteToGameSassionFile(opponent_move_s, &opponent_mov, READ_FROM_GAMESESSION);
+
+			/* Write move to GameSession.txt */
+			retVal = ReadOrWriteToGameSassionFile(player_move_s, &player_move, WRITE_TO_GAMESESSION);
+
+			/* Signal opponent thread */
+			retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
+			if (FALSE == retVal)
+			{
+				printf("Error when releasing find_opp_sem\n");
+
+				return ERROR_CODE;
+			}
+
+			/* Wait opponent thread */
+			wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
+			if (WAIT_OBJECT_0 != wait_code)
+			{
+				printf("Error when waiting for com_sem[0]\n");
+				return ERROR_CODE;
+			}
+
+			/* Remove file */
+			if (remove("HELLO.txt") == -1)
+			{
+				printf("Error in deleting GameSession.txt file");
+				return ERROR_CODE;
+			}
+			
+		}
+		/* Calculate result */
+		*winning_player = PlayMatch(player_move, opponent_mov);
+
+		return 0;
+	}
 }
 
 int findOpponentBarrier()
@@ -282,7 +381,7 @@ int findOpponentBarrier()
 	if (ret == ERROR_CODE)
 		return ERROR_CODE;
 
-	wait_code = WaitForSingleObject(find_opp_sem, INFINITE); // Need to change the timeout to 30 sec
+	wait_code = WaitForSingleObject(find_opp_sem, WAIT_FOR_OPP_TIME); // Need to change the timeout to 30 sec
 
 	if (WAIT_OBJECT_0 == wait_code)		return OPPONENT_FOUND;
 	else if (WAIT_TIMEOUT == wait_code)
@@ -297,6 +396,9 @@ int findOpponentBarrier()
 
 		/* critical section */
 		barrier_count = 0;
+		if(barrier_count == 1) ret = OPPONENT_WASENT_FOUND;
+		else ret = OPPONENT_FOUND;
+
 		ret_val = ReleaseMutex(find_opp_mutex);
 		if (FALSE == ret_val)
 		{
@@ -304,7 +406,7 @@ int findOpponentBarrier()
 			return ERROR_CODE;
 		}
 
-		return OPPONENT_WASENT_FOUND;
+		return ret;
 	}
 	else
 	{
@@ -314,8 +416,111 @@ int findOpponentBarrier()
 
 }
 
-int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move,
-	char *other_move, int winning_player, int *replay)
+int MakeSureFileExist()
+{
+	FILE* fp = NULL;
+	int wait_code =0, flag =0, retVal;
+	char fname[] = "GameSession.txt";
+
+	wait_code = WaitForSingleObject(com_file_mutex, INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for com_file_mutex\n");
+		return ERROR_CODE;
+	}
+
+	/* critical section */
+	if (FileExists(fname)) {
+		// file exists
+		flag = 1;
+	}
+	else {
+		// file doesn't exist
+		retVal = fopen_s(&fp,fname,"w");
+		if (retVal != 0)
+		{
+			printf("Error while trying to create %s\n",fname);
+			flag = ERROR_CODE;
+		}
+		fclose(fp);
+		flag = 0;
+	}
+
+	retVal = ReleaseMutex(com_file_mutex);
+	if (FALSE == retVal)
+	{
+		printf("Error when releasing com_file_mutex\n");
+		return ERROR_CODE;
+	}
+	return flag;
+
+}
+
+bool FileExists(const TCHAR *fileName)
+{
+	DWORD       fileAttr;
+
+	fileAttr = GetFileAttributes(fileName);
+	if (0xFFFFFFFF == fileAttr)
+		return false;
+	return true;
+}
+
+
+int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int read_write)
+{
+	char fname[] = "GameSession.txt";
+	FILE* fp;
+	int wait_code,retVal =0, ret =0;
+
+	wait_code = WaitForSingleObject(com_file_mutex, INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for com_file_mutex\n");
+		return ERROR_CODE;
+	}
+
+	/* critical section */
+
+	if (read_write == WRITE_TO_GAMESESSION)
+	{
+		/* Write */
+
+			retVal = fopen_s(&fp, fname, "w");
+			if (retVal != 0)
+			{
+				printf("Error while trying to open %s\n", fname);
+				ret = ERROR_CODE;
+			}
+			fprintf(fp, "%s,%d", player_move_s, *player_move_i);
+			fclose(fp);
+	}
+	else
+	{
+		/* Read */
+		retVal = fopen_s(&fp, fname, "r");
+		if (retVal != 0)
+		{
+			printf("Error while trying to open %s\n", fname);
+			ret = ERROR_CODE;
+		}
+		retVal = fsacnf_s(fp, "%s,%d", player_move_s,8, player_move_i);
+		fclose(fp);
+	
+	}
+	retVal = ReleaseMutex(com_file_mutex);
+	if (FALSE == retVal)
+	{
+		printf("Error when releasing com_file_mutex\n");
+		return ERROR_CODE;
+	}
+
+	return ret;
+
+}
+
+int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_move,
+					char *other_move, int winning_player, int *replay)
 {
 	char message_send[MAX_MESSAGE];
 	char message_type[MAX_MESSAGE];
@@ -575,3 +780,4 @@ int PlayMatch(int player1_move, int player2_move)
 			return 0;
 	}
 }
+

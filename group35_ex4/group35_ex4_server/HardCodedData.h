@@ -15,8 +15,12 @@
 #define OPPONENT_FOUND  1
 #define OPPONENT_WASENT_FOUND 2 
 
+#define WRITE_TO_GAMESESSION 0
+#define READ_FROM_GAMESESSION 1
+
+
 #include "SharedHardCodedData.h"
-#include "GlobalVariables.h"
+
 typedef struct
 {
 	SOCKET mainSocket;

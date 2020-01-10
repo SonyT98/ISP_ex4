@@ -6,6 +6,7 @@
 
 #include "SharedHardCodedData.h"
 #include "HardCodedData.h"
+#include "GlobalVariables.h"
 
 // Function Declarations -------------------------------------------------------
 

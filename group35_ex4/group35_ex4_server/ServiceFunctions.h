@@ -8,6 +8,7 @@
 #include "ServerThreads.h"
 #include "SocketSendRecvTools.h"
 #include "ThreadFunctions.h"
+#include "GlobalVariables.h"
 
 /*
 * ClientUsername gets the client username through sending and reciving the
@@ -64,6 +65,25 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 */
 int findOpponentBarrier();
 
+/*
+* check if the file exits if not create a blank copy of it
+* Output:
+*	return 	0	- if opened the file.
+*	return 	1   - if the file already been created.
+*	return -1	- if an error accrued.
+*/
+int MakeSureFileExist();
+
+
+/*
+	check if file exits
+	Arguments:
+		filename - string consist the filename.
+	Return:
+		TRUE:	file exist
+		FALSE:	file doesn't exist
+*/
+bool FileExists(const TCHAR *fileName);
 
 /*
 * EndGameStatus gets the player and the second player username and moves, and send the data to the client.
@@ -93,6 +113,16 @@ int EndGameStatus(SOCKET sock, char *username, char *other_player, char *my_move
 */
 int GetMoveFromClient(SOCKET sock, char* player_move_s, int *player_move);
 
+/*
+	This function read and write the GameSession.txt file the client move. depend on the inputs.
+	Arguments:
+		player_move_s	- string consist the player move. if in read mode will be update to the opponent move
+		player_move_i	- int consist the player move. if in read mode will be update to the opponent move
+		read_write		- int that indicate whether read or write to the .txt file. use WRITE_TO_GAMESESSION and READ_FROM_GAMESESSION.
+	Return:
+		-1 if Error, 0 else.
+*/
+int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int read_write);
 
 /*
 * PlayMatch is a function that gets two moves of two players and return the index of the

@@ -4,8 +4,8 @@
 
 
 #include "HardCodedData.h"
-#include "SharedHardCodedData.h"
 #include "ServerThreads.h"
+#include "GlobalVariables.h"
 
 /*
 * this is the main function of the server, constantly check for clients and open service thread for each one

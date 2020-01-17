@@ -9,6 +9,9 @@
 extern HANDLE ThreadHandles[MAX_NUM_CLIENTS];
 extern ServiceThreadParams ThreadInputs[MAX_NUM_CLIENTS];
 
+//Leaderboard struct variables
+leaderboard_player *first_player;
+
 // find opponent barirer semaphre
 extern HANDLE find_opp_sem;
 extern HANDLE find_opp_mutex;

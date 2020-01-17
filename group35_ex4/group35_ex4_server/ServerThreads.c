@@ -41,17 +41,27 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 
 	arg = (ServiceThreadParams*)lpParam;
 
+	//variables
 	char username[MAX_USERNAME];
 	char player_move[MAX_MESSAGE];
 	char cpu_move[MAX_MESSAGE];
 	int err = 0;
 	int menu_selection = 0, winning_player = 0, replay = 0;
 
+	//get the client username and accept him
 	err = ClientUsername(arg->client_socket, username);
+	
+	while (!replay)
+	{
+		//get the main menu selection from the client
+		err = SelectFromMenu(arg->client_socket, &menu_selection);
 
-	err = SelectFromMenu(arg->client_socket, &menu_selection);
-
-	err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player);
-
-	err = EndGameStatus(arg->client_socket, username, "CPU", player_move, cpu_move, winning_player, &replay);
+		switch (menu_selection)
+		{
+		case 1:
+			err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player);
+			err = EndGameStatus(arg->client_socket, username, "Server", player_move, cpu_move, winning_player, &replay);
+			break;
+		}
+	}
 }

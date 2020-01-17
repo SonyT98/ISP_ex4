@@ -277,11 +277,11 @@ int MessageCut(char *message, int message_size, char* message_type, char *info)
 		else
 			info[i - type_size] = message[i];
 	}
-	//if we didnt got to ':' char this isnt a correct message
+	//if we didnt got to ':' char this message has no info
 	if (info_or_type == 0)
 	{
-		printf("Error: The message received isn't correct\n");
-		return ERROR_CODE;
+		info[0] = '\0';
+		return 0;
 	}
 	// set info as string
 	else

@@ -18,12 +18,13 @@
 
 #define ERROR_CODE ((int)(-1))
 #define MAX_USERNAME 20
-#define MAX_MESSAGE 60
+#define MAX_MESSAGE 90
+#define MAX_LINE 100
 #define SENDRECV_WAITTIME INFINITE
 #define USER_WAITTIME 600000
 
 #define SERVER_ADDRESS_STR "127.0.0.1"
-#define SERVER_PORT 8887
+#define SERVER_PORT 1001
 #define CONNECTION_DISCONNECTED 1
 
 /*------------------------- Client Messages ----------------------------------*/

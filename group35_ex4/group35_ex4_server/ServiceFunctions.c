@@ -52,7 +52,7 @@ int ClientUsername(SOCKET sock, char *username)
 
 
 	/*----------------------------send SERVER_APPROVED-----------------------------*/
-	err = sprintf_s(message_send,MAX_MESSAGE, "%s:\n", SERVER_APPROVED);
+	err = sprintf_s(message_send,MAX_MESSAGE, "%s\n", SERVER_APPROVED);
 	if (err == 0 || err == EOF)
 	{
 		printf("Error: can't create the message for the client\n");
@@ -103,7 +103,7 @@ int SelectFromMenu(SOCKET sock, int* menu_select)
 
 
 	/*----------------------------send SERVER_MAIN_MENU-----------------------------*/
-	err = sprintf_s(message_send,MAX_MESSAGE ,"%s:\n", SERVER_MAIN_MENU);
+	err = sprintf_s(message_send,MAX_MESSAGE ,"%s\n", SERVER_MAIN_MENU);
 	if (err == 0 || err == EOF)
 	{
 		printf("Error: can't create the message for the client\n");
@@ -125,7 +125,7 @@ int SelectFromMenu(SOCKET sock, int* menu_select)
 	packet->array_size = 0;
 
 	//activate the recv thread and get his exit code
-	exit_code = ActivateThread((void*)packet, 0, SENDRECV_WAITTIME);
+	exit_code = ActivateThread((void*)packet, 0, USER_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
 
@@ -202,6 +202,7 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 
 	*winning_player = PlayMatch(player_move, cpu_move);
 
+
 return_ret:
 	return ret;
 }
@@ -229,7 +230,8 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 	// Opponent wasn't found
 	else if (retVal == OPPONENT_WASENT_FOUND)
 	{
-		err = sprintf_s(message_send, MAX_MESSAGE, "%s:\n", SERVER_NO_OPPONENTS);
+		/*---------------------------- send SERVER_NO_OPPONENTS -----------------------------*/
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", SERVER_NO_OPPONENTS);
 		if (err == 0 || err == EOF)
 		{
 			printf("Error: can't create the message for the client\n");
@@ -342,6 +344,7 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 	}
 }
 
+
 int findOpponentBarrier()
 {
 	DWORD wait_code;
@@ -416,6 +419,7 @@ int findOpponentBarrier()
 
 }
 
+
 int MakeSureFileExist()
 {
 	FILE* fp = NULL;
@@ -455,6 +459,7 @@ int MakeSureFileExist()
 	return flag;
 
 }
+
 
 bool FileExists(const TCHAR *fileName)
 {
@@ -504,7 +509,7 @@ int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int re
 			printf("Error while trying to open %s\n", fname);
 			ret = ERROR_CODE;
 		}
-		retVal = fsacnf_s(fp, "%s,%d", player_move_s,8, player_move_i);
+		retVal = fscanf_s(fp, "%s,%d", player_move_s,8, player_move_i);
 		fclose(fp);
 	
 	}
@@ -519,6 +524,7 @@ int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int re
 
 }
 
+
 int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_move,
 					char *other_move, int winning_player, int *replay)
 {
@@ -529,6 +535,10 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 	sendthread_s *packet;
 
 	int err = 0, ret = 0, exit_code = 0;
+
+	//updating leaderboard
+	//err = UpdateLeaderboard(username, winning_player);
+	//if (err == ERROR_CODE) { ret = err; goto return_ret;}
 
 	//malloc for the sendthread_s struct
 	packet = (sendthread_s*)malloc(sizeof(sendthread_s));
@@ -544,11 +554,11 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 
 	/*------------------------------- send SERVER_GAME_RESULT ---------------------------------*/
 	//if the client won
-	if (winning_player == 1)
+	if (winning_player == PLAYER_WON)
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
 			other_player, other_move, my_move, username);
 	//if the cpu won
-	else if (winning_player == 2)
+	else if (winning_player == PLAYER_LOST)
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
 			other_player, other_move, my_move, other_player);
 	//else its a tie
@@ -573,7 +583,7 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 
 	/*------------------------------- send SERVER_GAME_OVER_MENU ---------------------------------*/
 	//create the server game over menu message to the client
-	err = sprintf_s(message_send, MAX_MESSAGE, "%s:\n", SERVER_GAME_OVER_MENU);
+	err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", SERVER_GAME_OVER_MENU);
 	if (err == 0 || err == EOF)
 	{
 		printf("Error: can't create the message for the client\n");
@@ -594,7 +604,7 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 	packet->array_size = 0;
 
 	//activate the recv thread and get his exit code
-	exit_code = ActivateThread((void*)packet, 0, SENDRECV_WAITTIME);
+	exit_code = ActivateThread((void*)packet, 0, USER_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0) { ret = exit_code;  goto cleanup_memory; }
 
@@ -649,7 +659,7 @@ int GetMoveFromClient(SOCKET sock, char* player_move_s, int *player_move)
 	packet->sock = sock;
 
 	/*----------------------------send SERVER_PLAYER_MOVE_REQUEST-----------------------------*/
-	err = sprintf_s(message_send, MAX_MESSAGE, "%s:\n", SERVER_PLAYER_MOVE_REQUEST);
+	err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", SERVER_PLAYER_MOVE_REQUEST);
 	if (err == 0 || err == EOF)
 	{
 		printf("Error: can't create the message for the client\n");
@@ -719,65 +729,250 @@ int PlayMatch(int player1_move, int player2_move)
 	{
 		//beats scissors and lizard
 		if (player2_move == SCISSORS || player2_move == LIZARD)
-			return 1;
+			return PLAYER_WON;
 		//beaten by paper and spock
 		else if (player2_move == SPOCK || player2_move == PAPER)
-			return 2;
+			return PLAYER_LOST;
 		//a tie
 		else
-			return 0;
+			return PLAYER_TIE;
 	}
 	//if the first player is a paper
 	else if (player1_move == PAPER)
 	{
 		//beats rock and spock
 		if (player2_move == ROCK || player2_move == SPOCK)
-			return 1;
+			return PLAYER_WON;
 		//beaten by lizard and scissors
 		else if (player2_move == LIZARD || player2_move == SCISSORS)
-			return 2;
+			return PLAYER_LOST;
 		//a tie
 		else
-			return 0;
+			return PLAYER_TIE;
 	}
 	//if the first player is scissors
 	else if (player1_move == SCISSORS)
 	{
 		//beats paper and lizard
 		if (player2_move == PAPER || player2_move == LIZARD)
-			return 1;
+			return PLAYER_WON;
 		//beaten by rock and spock
 		else if (player2_move == ROCK || player2_move == SPOCK)
-			return 2;
+			return PLAYER_LOST;
 		//a tie
 		else
-			return 0;
+			return PLAYER_TIE;
 	}
 	//if the first player is a lizard
 	else if (player1_move == LIZARD)
 	{
 		//beats paper and spock
 		if (player2_move == PAPER || player2_move == SPOCK)
-			return 1;
+			return PLAYER_WON;
 		//beaten by rock and scissors
 		else if (player2_move == ROCK || player2_move == SCISSORS)
-			return 2;
+			return PLAYER_LOST;
 		//a tie
 		else
-			return 0;
+			return PLAYER_TIE;
 	}
 	//if the first player is a spock
 	else
 	{
 		//beats scissors and rock
 		if (player2_move == SCISSORS || player2_move == ROCK)
-			return 1;
+			return PLAYER_WON;
 		//beaten by paper and lizard
 		else if (player2_move == LIZARD || player2_move == PAPER)
-			return 2;
+			return PLAYER_LOST;
 		//a tie
 		else
-			return 0;
+			return PLAYER_TIE;
 	}
 }
 
+
+void RemovePlayerFromList(leaderboard_player **before_player, leaderboard_player **player, leaderboard_player **first)
+{
+	//the player is first in the list
+	if (*before_player == NULL)
+	{
+		*first = (*first)->next;
+	}
+	//there is a player in the list
+	if (*player != NULL)
+	{
+		(*before_player)->next = (*player)->next;
+		(*player)->next = NULL;
+	}
+}
+
+
+int SearchInList(leaderboard_player **current_player, char *username, int gamestat, leaderboard_player **first_p)
+{
+	leaderboard_player *search_p = *first_p;
+	leaderboard_player *search_p_before = NULL;
+	int found_flag = 0, ret = 0, err = 0;
+
+	//search the list for the username
+	while (search_p != NULL)
+	{
+		if (STRINGS_ARE_EQUAL(username, search_p->username))
+		{
+			//if found remove it from the list
+			RemovePlayerFromList(&search_p_before, &search_p, first_p);
+			found_flag = 1;
+			break;
+		}
+		search_p_before = search_p;
+		search_p = search_p->next;
+	}
+	//if found update the current_player to the player with the same user name
+	if (found_flag == 1)
+		*current_player = search_p;
+	//if player wasnt found allocate memory for the player struct
+	else
+	{
+		(*current_player) = (leaderboard_player*)malloc(sizeof(leaderboard_player));
+		if ((*current_player) == NULL)
+		{
+			printf("Error: allocating memory for leaderboard struct\n");
+			ret = ERROR_CODE;
+			goto return_ret;
+		}
+		err = sprintf_s((*current_player)->username,MAX_USERNAME+1, "%s", username);
+		if (err == 0 || err == EOF)
+		{
+			printf("Error: can't use sprintf for the struct");
+			ret = ERROR_CODE;
+			goto main_cleanup;
+		}
+		(*current_player)->lost = 0;
+		(*current_player)->won = 0;
+		(*current_player)->ratio = 0;
+		(*current_player)->next = NULL;
+	}
+	//update his won/lost stats according to the game result
+	if (gamestat == PLAYER_WON)
+	{
+		(*current_player)->won += 1;
+		if ((*current_player)->lost != 0)
+			(*current_player)->ratio = (*current_player)->won / (*current_player)->lost;
+		else
+			(*current_player)->ratio = -1;
+	}
+	else if (gamestat == PLAYER_LOST)
+	{
+		(*current_player)->lost += 1;
+		(*current_player)->ratio = (*current_player)->won / (*current_player)->lost;
+	}
+	goto return_ret;
+
+main_cleanup:
+	free(*current_player);
+return_ret:
+	return ret;
+}
+
+
+int InsertPlayer(leaderboard_player** current_player, leaderboard_player **first_p)
+{
+	leaderboard_player *search_p = *first_p;
+	leaderboard_player *search_p_before = NULL;
+
+	//if the list is empty
+	if (*first_p == NULL)
+	{
+		*first_p = *current_player;
+		return 0;
+	}
+
+	//going over the list
+	while (search_p != NULL)
+	{
+		//if the player has the best ratio or it has better ratio then the one we are in
+		if (((*current_player)->ratio == -1) || (((*current_player)->ratio > search_p->ratio) && (search_p->ratio != -1)))
+		{
+			//if the current player is the first player in the list
+			if (search_p_before == NULL)
+				(*first_p) = current_player;
+			else
+				search_p_before->next = *current_player;
+			(*current_player)->next = search_p;
+			return 0;
+		}
+		search_p_before = search_p;
+		search_p = search_p->next;
+	}
+	//if the player is in the last place
+	search_p_before->next = *current_player;
+	return 0;
+}
+
+
+int WriteToFile(leaderboard_player** first_p)
+{
+	leaderboard_player *cur = *first_p;
+	int err = 0, ret = 0;
+
+	FILE *fp = NULL;
+
+	err = fopen_s(&fp, "Leaderboard.csv", "w");
+	if (err != 0)
+	{
+		printf("Error: opening leaderboard file\n");
+		ret = ERROR_CODE;
+		goto return_ret;
+	}
+	//first line in csv
+	fputs("Name,Won,Lost,W/L Ratio\n", fp);
+
+	while (cur != NULL)
+	{
+		if (cur->ratio != 0 && cur->ratio != -1)
+		{
+			err = fprintf_s(fp, "%s,%d,%d,%lf\n", cur->username, cur->won, cur->lost, cur->ratio);
+			if (err <= 0)
+			{
+				printf("Error: writing to file\n");
+				ret = ERROR_CODE;
+				goto close_file;
+			}
+		}
+		else
+		{
+			err = fprintf_s(fp, "%s,%d,%d\n", cur->username, cur->won, cur->lost);
+			if (err <= 0)
+			{
+				printf("Error: writing to file\n");
+				ret = ERROR_CODE;
+				goto close_file;
+			}
+		}
+		cur = cur->next;
+
+	}
+
+close_file:
+	fclose(fp);
+return_ret:
+	return ret;
+}
+
+
+int UpdateLeaderboard(char *username, int gamestat)
+{
+	int err = 0;
+
+	leaderboard_player *current = NULL;
+
+	err = SearchInList(&current, username, gamestat, &first_player);
+	if (err == ERROR_CODE) { return err; }
+
+	err = InsertPlayer(&current, &first_player);
+
+	err = WriteToFile(&first_player);
+	if (err == ERROR_CODE) { return err; }
+
+	return err;
+}

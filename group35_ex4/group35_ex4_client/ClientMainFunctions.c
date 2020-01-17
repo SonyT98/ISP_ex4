@@ -39,7 +39,7 @@ int clientMain()
 
 
 	// Send and receive data.
-	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_REQUEST:NADAVNAVE\n");
+	retVal = sprintf_s(sendMessage,sizeof(sendMessage),"%s", "CLIENT_REQUEST:Nadav\n");
 	send.array_size = strlen(sendMessage);
 	send.array_t = sendMessage;
 	send.sock = client_sock;
@@ -100,7 +100,7 @@ int clientMain()
 	retVal = MessageCut(recive.array_t, recive.array_size, messageType, messageInfo);
 
 	// pick what to do
-	retVal = sprintf_s(sendMessage, sizeof(sendMessage), "%s", "CLIENT_PLAYER_MOVE:ROCK\n");
+	retVal = sprintf_s(sendMessage, sizeof(sendMessage), "%s", "CLIENT_REPLAY:\n");
 	send.array_size = strlen(sendMessage);
 	send.array_t = sendMessage;
 	send.sock = client_sock;

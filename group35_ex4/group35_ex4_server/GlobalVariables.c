@@ -4,6 +4,9 @@
 HANDLE ThreadHandles[MAX_NUM_CLIENTS] = { NULL };
 ServiceThreadParams ThreadInputs[MAX_NUM_CLIENTS];
 
+//Leaderboard struct variables
+leaderboard_player *first_player = NULL;
+
 // find opponent barrier
 HANDLE find_opp_sem = NULL;
 HANDLE find_opp_mutex = NULL;

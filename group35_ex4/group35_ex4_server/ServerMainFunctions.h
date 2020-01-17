@@ -46,6 +46,31 @@ int initializeSemaphores();
 */
 void closeSemaphores();
 
+/*
+* IntializeLeaderboard intialize the global struct that hold the leaderboard
+* data, to the saved file of the leaderboard that saved on the server.
+* Input Arguments:
+*	first_p - a pointer to the pointer of the first item on the struct list.
+* Output:
+*	the function will return -1 if failed.
+*/
+int IntializeLeaderboard(leaderboard_player **first_p);
 
+/*
+* FreeLeaderboard gets the leaderboard list and free all of its allocated memory.
+* Input Arguments:
+*	first_p - a pointer to the pointer of the first item on the struct list.
+* Output:
+*	the function will return -1 if failed.
+*/
+int FreeLeaderboard(leaderboard_player **first_p);
+
+/*
+* ReplaceCommaStr will get the line that read from leaderboard.csv and replace all the
+* commas with space for sscanf
+* Input Argument:
+*	line_str - an str that holds the line read from the csv
+*/
+void ReplaceCommaStr(char *line_str);
 
 #endif // __SERVERMAINFUNCTIONS_H__

@@ -49,6 +49,14 @@ int serverMain()
 		goto server_cleanup_2;
 	}
 	
+	//Intialize the leaderboard struct
+	retVal = IntializeLeaderboard(&first_player);
+	if (retVal == ERROR_CODE)
+	{
+		ret = ERROR_CODE;
+		goto server_cleanup_2;
+	}
+
 	accept_exit_ThreadHandle[1] = CreateThreadSimple((LPTHREAD_START_ROUTINE)CheckExitThread, &exit_thread_id, NULL);
 	if (accept_exit_ThreadHandle[1] == NULL)
 	{
@@ -198,6 +206,7 @@ cleanup_1:
 	return ret;
 }
 
+
 int initializeSemaphores()
 {
 
@@ -251,6 +260,7 @@ cleanup_1:
 	return ERROR_CODE;
 }
 
+
 static int FindFirstUnusedThreadSlot()
 {
 	int Ind;
@@ -276,6 +286,7 @@ static int FindFirstUnusedThreadSlot()
 	return Ind;
 }
 
+
 void closeSemaphores()
 {
 
@@ -284,4 +295,134 @@ void closeSemaphores()
 	CloseHandle(com_file_mutex);
 	CloseHandle(find_opp_mutex);
 	CloseHandle(find_opp_sem);
+}
+
+
+int IntializeLeaderboard(leaderboard_player **first_p)
+{
+	FILE *fp;
+
+	char first_line[MAX_LINE];
+	char player_line[MAX_LINE];
+
+	int ret = 0, err = 0;
+	err = fopen_s(&fp, "Leaderboard.csv", "r");
+
+	leaderboard_player *current_player = NULL;
+
+	//the file exists
+	if (fp)
+	{
+		//ignoring the first line
+		if (fgets(first_line, 26, fp) == NULL)
+		{
+			printf("Error: reading from file\n");
+			ret = ERROR_CODE;
+			goto close_file;
+		}
+		//go over the file until we get to the EOF
+		while (fgets(player_line, MAX_LINE, fp) != NULL)
+		{
+			//new item on the list
+			if (*first_p == NULL)
+			{
+				(*first_p) = (leaderboard_player*)malloc(sizeof(leaderboard_player));
+				if ((*first_p) == NULL)
+				{
+					printf("Error: allocating memory for the leaderboard struct\n");
+					ret = ERROR_CODE;
+					goto close_file;
+				}
+				current_player = *first_p;
+			}
+			//not a new item
+			else
+			{
+				current_player->next = (leaderboard_player*)malloc(sizeof(leaderboard_player));
+				if (current_player->next == NULL)
+				{
+					printf("Error: allocating memory for the leaderboard struct\n");
+					ret = ERROR_CODE;
+					goto free_struct;
+				}
+				current_player = current_player->next;
+			}
+
+
+			//now the player is in the last place on the list so far (he has the worst ratio)
+			//this information is for the last player
+			ReplaceCommaStr(player_line);
+
+			err = sscanf_s(player_line, "%s%d%d%lf\n", current_player->username, MAX_USERNAME + 1,
+				&(current_player->won), &(current_player->lost), &(current_player->ratio));
+			if (err == EOF || err == 0)
+			{
+				printf("Error: getting the information of the leaderboard using sscanf\n");
+				ret = ERROR_CODE;
+				goto free_struct;
+			}
+			//if there is no ratio
+			else if (err == 3)
+			{
+				if (current_player->won > 0)
+					current_player->ratio = -1;
+				else
+					current_player->ratio = 0;
+			}
+			current_player->next = NULL;
+		}
+	}
+	//the file doesnt exist
+	else
+	{
+		err = fopen_s(&fp, "Leaderboard.csv", "w");
+		if (fp == NULL)
+		{
+			printf("Error: creating the leaderboard file\n");
+			ret = ERROR_CODE;
+			goto ret_goto;
+		}
+		err = fputs("Name,Won,Lost,W/L Ratio\n", fp);
+		if (err == EOF)
+		{
+			printf("Error: writing to the leaderboard file\n");
+			ret = ERROR_CODE;
+			goto ret_goto;
+		}
+	}
+	goto close_file;
+
+free_struct:
+	err = FreeLeaderboard(first_p);
+close_file:
+	fclose(fp);
+ret_goto:
+	return ret;
+}
+
+
+int FreeLeaderboard(leaderboard_player **first_p)
+{
+	leaderboard_player *cur = NULL;
+
+	while (*first_p != NULL)
+	{
+		cur = *first_p;
+		*first_p = (*first_p)->next;
+		free(cur);
+	}
+	return 0;
+}
+
+
+void ReplaceCommaStr(char *line_str)
+{
+	int i = 0;
+	for (i = 0; line_str[i] != '\0'; i++)
+	{
+		if (line_str[i] == ',')
+		{
+			line_str[i] = ' ';
+		}
+	}
 }

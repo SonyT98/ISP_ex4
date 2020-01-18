@@ -4,6 +4,10 @@
 HANDLE ThreadHandles[MAX_NUM_CLIENTS] = { NULL };
 ServiceThreadParams ThreadInputs[MAX_NUM_CLIENTS];
 
+char usernames[MAX_NUM_CLIENTS][MAX_USERNAME] = {"", ""};
+
+
+
 //Leaderboard struct variables
 leaderboard_player *first_player = NULL;
 
@@ -17,3 +21,8 @@ int gameon = 0;
 HANDLE com_file_mutex = NULL;
 
 HANDLE com_sem[MAX_NUM_CLIENTS] = { NULL };
+
+extern HANDLE username_mutex = NULL;
+
+// Versus game replay flag
+int replay_arr[MAX_NUM_CLIENTS];

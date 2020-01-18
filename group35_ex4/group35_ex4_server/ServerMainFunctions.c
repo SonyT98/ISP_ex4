@@ -75,17 +75,20 @@ int serverMain()
 			printf("Error creating CheckExitThread\n");
 			goto server_cleanup_4;
 		}
+
 		// wait for ether exit or client trying to connect
-		int retVal = WaitForMultipleObjects(2, accept_exit_ThreadHandle, false, INFINITE);
+		retVal = WaitForMultipleObjects(2, accept_exit_ThreadHandle, false, INFINITE);
 		if ((retVal != WAIT_OBJECT_0) && (retVal != WAIT_OBJECT_0 + 1))
 		{
 			printf("Error while waiting using WaitForMultipleObjects\n");
 			ret = ERROR_CODE;
-			goto server_cleanup_5;
+			goto server_cleanup_6;
 		}
-		// check Which thread has finished
+
+		// check Which thread has finished 
 		if (retVal - WAIT_OBJECT_0 == 1)
 		{
+			//if the exit thread was signaled
 			break;
 		}
 
@@ -93,7 +96,13 @@ int serverMain()
 		Ind = FindFirstUnusedThreadSlot();
 		if (Ind == MAX_NUM_CLIENTS) //no slot is available
 		{
-			printf("No slots available for client, dropping the connection.\n");
+			/* Send to the client that no slots were found */
+			retVal =  sendServerDenied(acceptSocket);
+			if (retVal == ERROR_CODE)
+			{
+				ret = ERROR_CODE;
+				goto server_cleanup_6;
+			}
 			//server denied
 			closesocket(acceptSocket); //Closing the socket, dropping the connection.
 		}
@@ -107,7 +116,7 @@ int serverMain()
 			if (accept_exit_ThreadHandle[1] == NULL)
 			{
 				printf("Error creating CheckExitThread\n");
-				goto server_cleanup_3;
+				goto server_cleanup_6;
 			}
 
 		}
@@ -115,6 +124,13 @@ int serverMain()
 	}
 
 	/* EXIT procedure */
+server_cleanup_6:
+
+	CloseHandle(ThreadHandles[0]);
+	CloseHandle(ThreadHandles[1]);
+	closesocket((ThreadInputs[0]).client_socket);
+	closesocket((ThreadInputs[1]).client_socket);
+	closesocket(closesocket((ThreadInputs[1]).client_socket));
 
 
 
@@ -129,7 +145,6 @@ server_cleanup_3:
 server_cleanup_2:
 	if(closesocket(acceptParam.mainSocket) == SOCKET_ERROR)
 		printf("Failed to close MainSocket, error %ld. Ending program\n", WSAGetLastError());
-
 server_cleanup_1: //Close WINSOCK 
 	if (WSACleanup() == SOCKET_ERROR)
 		printf("Failed to close Winsocket, error %ld. Ending program.\n", WSAGetLastError());
@@ -246,9 +261,20 @@ int initializeSemaphores()
 		printf("Error creating com_sem[1]\n");
 		goto cleanup_5;
 	}
+	username_mutex = CreateMutex(NULL, FALSE, NULL);
+	if (username_mutex == NULL)
+	{
+		printf("Error creating username_mutex\n");
+		goto cleanup_6;
+	}
+
+
 	// all inits went well
 	return 0;
-
+cleanup_7:
+	CloseHandle(username_mutex);
+cleanup_6:
+	CloseHandle(com_sem[1]);
 cleanup_5:
 	CloseHandle(com_sem[0]);
 cleanup_4:
@@ -290,7 +316,7 @@ static int FindFirstUnusedThreadSlot()
 
 void closeSemaphores()
 {
-
+	CloseHandle(username_mutex);
 	CloseHandle(com_sem[1]);
 	CloseHandle(com_sem[0]);
 	CloseHandle(com_file_mutex);
@@ -426,4 +452,33 @@ void ReplaceCommaStr(char *line_str)
 			line_str[i] = ' ';
 		}
 	}
+}
+
+int sendServerDenied(SOCKET acceptSocket)
+{
+	DWORD wait_code;
+	int retVal = 0;
+	int err;
+
+
+	char message_send[MAX_MESSAGE];
+
+	sendthread_s packet;
+
+
+	/*---------------------------- send SERVER_NO_OPPONENTS -----------------------------*/
+	err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", SERVER_DENIED);
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: can't create the message for the client\n");
+		return ERROR_CODE;
+	}
+	packet.array_t = message_send;
+	packet.array_size = strlen(message_send);
+
+	//activate the send thread and get his exit code
+	err = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (err != 0)  return err;
+	return 0;
 }

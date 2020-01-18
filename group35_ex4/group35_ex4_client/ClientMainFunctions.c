@@ -7,6 +7,8 @@ int clientMain(char *username, char *server_adr, char *server_port)
 	SOCKET client_sock = INVALID_SOCKET;
 	int ret = 0, retVal = 0;
 	int connect_again = 1;
+	int replay = 1;
+	int close_socket = 0;
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -18,16 +20,41 @@ int clientMain(char *username, char *server_adr, char *server_port)
 	}
 	/* The WinSock DLL is acceptable. Proceed. */
 
-	while (connect_again)
+	while (connect_again == 1)
 	{
-		/* Initialize client socket */
+		//if there is a new connection, we want to close the socket
+		if (close_socket == 1)
+			closesocket(client_sock);
+
+		//the first run the socket is close
+		//any other runs on the while, will have the socket intialize again
+		close_socket = 1;
+
+
+		// Initialize client socket
 		retVal = initializeConnection(&client_sock, server_adr, server_port, &connect_again);
+		// if the connection it self failed exit the client
 		if (retVal == ERROR_CODE)
+		{ ret = ERROR_CODE; goto client_cleanup_1; }
+		// connection failed and update the connection if necessery
+		else if (retVal != 0)
+			continue;
+
+		//request connection from the server
+		retVal = RequestConnection(client_sock, &connect_again, server_adr, server_port,username);
+		// if the connection it self failed exit the client
+		if (retVal == ERROR_CODE)
+		{ ret = ERROR_CODE; goto client_cleanup_2; }
+		// connection failed and update the connection if necessery
+		else if (retVal != 0)
+			continue; 
+
+		while (TRUE)
 		{
-			ret = ERROR_CODE;
-			goto client_cleanup_1;
+
 		}
 	}
+	
 client_cleanup_2:
 	closesocket(client_sock);
 client_cleanup_1:
@@ -39,7 +66,7 @@ int initializeConnection(SOCKET *sock, char *server_adr, char *server_port, int 
 {
 
 	SOCKADDR_IN clientService;
-
+	int ret = 0;
 
 	// Create a socket.
 	*sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -72,21 +99,132 @@ int initializeConnection(SOCKET *sock, char *server_adr, char *server_port, int 
 	if (connect(*sock, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) 
 	{
 		// the connection lost, and we need to get the user pick
-		printf("Failed to connect.\n");
-		closesocket(*sock);
-		return CONNECTION_FAILED;
+		ret = ConnectionErrorMenu(connect_again, CONNECTION_FAILED, server_adr, server_port);
+		if (ret == ERROR_CODE)
+			closesocket(*sock);
+		return ret;
 	}
 
 	return 0;
 
 }
 
-int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_adr, char *server_port)
+int RequestConnection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, char *username)
 {
-	//if the connection failed
-	if (connection_error_type == CONNECTION_FAILED)
-		printf("Failed connecting to server on <%s>:<%s>.", server_adr, server_port);
-	//if the connecion lost
-	else if (connection_error_type == CONNECTION_LOST)
-		printf("Connection to server on <%s>:<%s> has been lost", server_adr, server_port);
+	//variables
+	char message_type[MAX_MESSAGE];
+	char message_send[MAX_MESSAGE];
+	char message_info[MAX_MESSAGE];
+
+	sendthread_s packet;
+
+	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
+
+	packet.sock = sock;
+
+	/*----------------------------send CLIENT_REQUEST-----------------------------*/
+	err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", CLIENT_REQUEST, username);
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: can't create the message for the client\n");
+		ret = ERROR_CODE;
+		goto return_ret;
+	}
+	packet.array_size = strlen(message_send);
+	packet.array_t = message_send;
+
+	//activate the send thread and get his exit code
+	exit_code = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code == ERROR_CODE) { ret = ERROR_CODE;  goto return_ret; }
+	//if the thread is on timeout or transsmition failed
+	else if (exit_code != 0)
+		return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+
+
+	/*----------------------------recv SERVER_APPROVED/SERVER_DENIED-----------------------------*/
+	packet.array_t = NULL;
+	packet.array_size = 0;
+
+	//activate the recv thread and get his exit code
+	exit_code = ActivateThread((void*)&packet, 0, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code == ERROR_CODE) { ret = ERROR_CODE;  goto return_ret; }
+	else if (exit_code != 0)
+		return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+
+	//get the message type and the information
+	err = MessageCut(packet.array_t, packet.array_size, message_type, message_info);
+	if (err == ERROR_CODE) { ret = ERROR_CODE; goto packet_cleanup; }
+
+	//if server denied, send to connection error menu
+	if (STRINGS_ARE_EQUAL(message_type, SERVER_DENIED))
+	{
+		ret = ConnectionErrorMenu(connect_again, CONNECTION_DENIED, server_adr, server_port);
+		goto packet_cleanup;
+	}
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_APPROVED))
+		goto packet_cleanup;
+	else
+	{
+		printf("Error: message recieved from the server doesnt match with the protocol\n");
+		ret = ERROR_CODE;
+		goto packet_cleanup;
+	}
+
+packet_cleanup:
+	free(packet.array_t);
+return_ret:
+	return ret;
+}
+
+int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *client_disconnect)
+{
+	//variables
+	char message_type[MAX_MESSAGE];
+	char message_send[MAX_MESSAGE];
+	char message_info[MAX_MESSAGE];
+
+	sendthread_s packet;
+
+	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
+
+	packet.sock = sock;
+
+	/*----------------------------recv message-----------------------------*/
+	packet.array_t = NULL;
+	packet.array_size = 0;
+
+	//activate the recv thread and get his exit code
+	exit_code = ActivateThread((void*)&packet, 0, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code == ERROR_CODE) { ret = ERROR_CODE;  goto return_ret; }
+	else if (exit_code != 0)
+		return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+
+	//get the message type and the information
+	err = MessageCut(packet.array_t, packet.array_size, message_type, message_info);
+	if (err == ERROR_CODE) { ret = ERROR_CODE; goto packet_cleanup; }
+
+	//the server send main menu selection
+	if (STRINGS_ARE_EQUAL(message_type, SERVER_MAIN_MENU))
+	{
+		err = MainMenuSelection(sock, connect_again, server_adr, server_port, client_disconnect);
+		if (err == ERROR_CODE) { ret = ERROR_CODE; goto packet_cleanup; }
+		else if (err != 0)
+			return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+	}
+	// the server inform the client that a match going to start
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_INVITE))
+		goto packet_cleanup;
+	//if the server ask the client to play his move
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_PLAYER_MOVE_REQUEST))
+	{
+
+	}
+
+packet_cleanup:
+	free(packet.array_t);
+return_ret:
+	return ret;
 }

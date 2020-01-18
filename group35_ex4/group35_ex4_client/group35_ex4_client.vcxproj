@@ -121,6 +121,7 @@
     <ClCompile Include="..\Shared\ThreadFunctions.c" />
     <ClCompile Include="ClientMainFunctions.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="UserInterfaceFunctions.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\SharedHardCodedData.h" />
@@ -128,6 +129,7 @@
     <ClInclude Include="..\Shared\ThreadFunctions.h" />
     <ClInclude Include="ClientMainFunctions.h" />
     <ClInclude Include="HardCodedData.h" />
+    <ClInclude Include="UserInterfaceFunctions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

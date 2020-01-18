@@ -223,7 +223,7 @@ int ActivateThread(void *arg, int recv_or_send, int waittime)
 		printf("Error: wait timeout to send the message\n");
 		printf("Terminating thread and exiting\n");
 		err_flag = TerminateThread(thread_handle, exit_code);
-		ret = ERROR_CODE;
+		ret = WAIT_TIMEOUT;
 		goto main_cleanup1;
 	}
 	//the wait for signle object failed, close the thread

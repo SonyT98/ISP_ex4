@@ -5,6 +5,7 @@
 #include "ThreadFunctions.h"
 #include "SharedHardCodedData.h"
 #include "HardCodedData.h"
+#include "UserInterfaceFunctions.h"
 
 
 /*
@@ -27,20 +28,34 @@ int clientMain(char *username, char *server_adr,char *server_port);
 *	server_port - the server port as a string.
 *	connect_again - a int that is 1 if the client want to connect again (if the connection failed).
 * Return:
-*	the funciton return ERROR_CODE if coudent connect or error accrued. 
+*	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
 int initializeConnection(SOCKET *sock, char *server_adr, char *server_port, int *connect_again);
 
 /*
-* ConnectionErrorMenu prints to the user the connection error menu, which different for every type.
+* Request connection from the server and connect if allowed
 * Input Arguments:
-*	user_pick - the user pick from the menu. 1 is connect again and 2 is disconnect.
-*	connection_error_type - get the connection error type to send to the client.
-*	server_adr - the server address as a string.
+*	sock - socket to be updated as a connected socket to the server.
+*	connect_again - a int that is 1 if the client want to connect again (if the connection failed).
 *	server_port - the server port as a string.
+*	server_adr - the server address as a string.
+*	username - a string of the client username.
 * Return :
-*	return ERROR_CODE if error accrued, and 0 else.
+*	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
-int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_adr, char *server_port);
+int RequestConnection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, char *username);
+
+/*
+* RecieveMessageFromServer receive the messages from the server and act accordingly
+*	sock - socket to be updated as a connected socket to the server.
+*	connect_again - a int that is 1 if the client want to connect again (if the connection failed).
+*	server_port - the server port as a string.
+*	server_adr - the server address as a string.
+*	client_disconnected - will update to 1 if the client want to disconnect.
+* Return :
+*	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
+*/
+int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *client_disconnected);
+
 
 #endif // __CLIENTMAINFUNCTIONS_H__

@@ -330,7 +330,7 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 			}
 
 			/* Remove file */
-			if (remove("HELLO.txt") == -1)
+			if (remove("GameSession.txt") == -1)
 			{
 				printf("Error in deleting GameSession.txt file");
 				return ERROR_CODE;
@@ -386,7 +386,27 @@ int findOpponentBarrier()
 
 	wait_code = WaitForSingleObject(find_opp_sem, WAIT_FOR_OPP_TIME); // Need to change the timeout to 30 sec
 
-	if (WAIT_OBJECT_0 == wait_code)		return OPPONENT_FOUND;
+	if (WAIT_OBJECT_0 == wait_code)
+	{
+		// reset the count if opponent found
+		wait_code = WaitForSingleObject(find_opp_mutex, INFINITE);
+		if (WAIT_OBJECT_0 != wait_code)
+		{
+			printf("Error when waiting for find_opp_mutex\n");
+			return ERROR_CODE;
+		}
+
+		/* critical section */
+		barrier_count = barrier_count - 1;
+
+		ret_val = ReleaseMutex(find_opp_mutex);
+		if (FALSE == ret_val)
+		{
+			printf("Error when releasing find_opp_mutex\n");
+			return ERROR_CODE;
+		}
+		return OPPONENT_FOUND;
+	}
 	else if (WAIT_TIMEOUT == wait_code)
 	{
 		// reset the count if no opponent found
@@ -398,7 +418,7 @@ int findOpponentBarrier()
 		}
 
 		/* critical section */
-		barrier_count = 0;
+		barrier_count = barrier_count -1;
 		if(barrier_count == 1) ret = OPPONENT_WASENT_FOUND;
 		else ret = OPPONENT_FOUND;
 

@@ -9,6 +9,7 @@
 extern HANDLE ThreadHandles[MAX_NUM_CLIENTS];
 extern ServiceThreadParams ThreadInputs[MAX_NUM_CLIENTS];
 
+extern char usernames[MAX_NUM_CLIENTS][MAX_USERNAME];
 //Leaderboard struct variables
 leaderboard_player *first_player;
 
@@ -21,6 +22,10 @@ extern int gameon;
 extern HANDLE com_file_mutex ;
 
 extern HANDLE com_sem[MAX_NUM_CLIENTS];
+
+extern HANDLE username_mutex;
+
+extern int replay_arr[MAX_NUM_CLIENTS];
 
 #endif // __GLOBALVARIABLES_H__
 

@@ -47,14 +47,15 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 /*
 * VersusGame set the game of the client against the versus mode.
 * Input Arguments:
-*	sock   - the socket we opend with the client.
-*	player_move_s - the string that include the player move.
-*	opp_move_s - the string that include the cpu move.
-*	winning_player - the winning player: 1 is the player, 2 is the cpu, 0 is a tie.
+*	sock			- the socket we opend with the client.
+*	index			- index of the thread used by this client
+*	player_move_s	- the string that include the player move.
+*	opp_move_s		- the string that include the cpu move.
+*	winning_player	- the winning player: 1 is the player, 2 is the cpu, 0 is a tie.
 * Output:
 *	return -1 if failed, otherwise return the exit code of the thread recv and send.
 */
-int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player);
+int VersusGame(SOCKET sock, int index , char* player_move_s, char* opp_move_s, int *winning_player);
 
 /*
 * exeute a barrier to find if another oppenent wants to play
@@ -83,6 +84,9 @@ int MakeSureFileExist();
 		FALSE:	file doesn't exist
 */
 bool FileExists(const TCHAR *fileName);
+
+
+
 
 /*
 * EndGameStatus gets the player and the second player username and moves, and send the data to the client.
@@ -122,6 +126,19 @@ int GetMoveFromClient(SOCKET sock, char* player_move_s, int *player_move);
 		-1 if Error, 0 else.
 */
 int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int read_write);
+
+/*
+	This function check if the client want to play with the opponent again if he does the function check if the opponent want to play too.
+	Arguments:
+			replay_choice	- 1 if the client wants to play again. 0 if client wants to gotomain menu
+			index			- index of the client thread.
+	Return:
+*		return OPPONENT_STAYED_GAME		1	- if the opponent wants to play again
+*		return OPPONENT_QUIT_GAME		2   - if the opponent doesn't want to play again
+*		return ERROR_CODE			   -1	- if an error accrued
+*/
+int VersusReplayOptionCheck(int replay_choice, int index);
+
 
 /*
 * PlayMatch is a function that gets two moves of two players and return the index of the

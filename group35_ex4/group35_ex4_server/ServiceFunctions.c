@@ -12,6 +12,7 @@ int ClientUsername(SOCKET sock, char *username)
 	sendthread_s *packet;
 
 	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
+	DWORD wait_code;
 
 	//malloc for the sendthread_s struct
 	packet = (sendthread_s*)malloc(sizeof(sendthread_s));
@@ -39,7 +40,22 @@ int ClientUsername(SOCKET sock, char *username)
 	temp_message = packet->array_t;
 
 	//get the message type and the information
+	wait_code = WaitForSingleObject(username_mutex, INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for username_mutex\n");
+		return ERROR_CODE;
+	}
+	/* Critical section */
 	err = MessageCut(packet->array_t, packet->array_size, message_type, username);
+	
+	err = ReleaseMutex(username_mutex);
+	if (FALSE == err)
+	{
+		printf("Error when releasing username_mutex\n");
+		return ERROR_CODE;
+	}
+
 	if (err == ERROR_CODE) { ret = ERROR_CODE; goto main_cleanup1; }
 
 	//if we didnt got client request message
@@ -208,7 +224,7 @@ return_ret:
 }
 
 
-int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_player)
+int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int *winning_player)
 {
 	
 	//variables
@@ -225,6 +241,8 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 
 	// find opponent barrier
 	retVal = findOpponentBarrier();
+
+
 
 	if (retVal = ERROR_CODE) return ERROR_CODE;
 	// Opponent wasn't found
@@ -246,13 +264,53 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 		if (exit_code != 0)  return exit_code;
 		return 0;
 	}
+	// Opponent found
 	else
 	{
-		// Opponent found
+
+		/*---------------------------- send SERVER_INVITE -----------------------------*/
+
+
+		wait_code = WaitForSingleObject(username_mutex, INFINITE);
+		if (WAIT_OBJECT_0 != wait_code)
+		{
+			printf("Error when waiting for username_mutex\n");
+			return ERROR_CODE;
+		}
+
+		/* Critical section */
+
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", SERVER_INVITE);
+
+		retVal = ReleaseMutex(username_mutex);
+		if (FALSE == retVal)
+		{
+			printf("Error when releasing username_mutex\n");
+			return ERROR_CODE;
+		}
+
+		if (err == 0 || err == EOF)
+		{
+			printf("Error: can't create the message for the client\n");
+			return ERROR_CODE;
+		}
+
+		packet.array_t = message_send;
+		packet.array_size = strlen(message_send);
+
+		//activate the send thread and get his exit code
+		exit_code = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
+		//if the thread setup failed or the thread function itself failed
+		if (exit_code != 0)  return exit_code;
+
+
+
+
 		flag = MakeSureFileExist();
 		if (flag == ERROR_CODE) return ERROR_CODE;
 
-		if (flag == 1) // the file was already open
+		// the file was already open
+		if (flag == 1) 
 		{
 			/* Ask client for his move */
 			err = GetMoveFromClient(sock, player_move_s, &player_move);
@@ -291,7 +349,9 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 			}
 
 		}
-		else // i opened the file
+
+		// i opened the file
+		else 
 		{
 
 			/* Ask client for his move */
@@ -337,6 +397,7 @@ int VersusGame(SOCKET sock, char* player_move_s, char* opp_move_s, int *winning_
 			}
 			
 		}
+
 		/* Calculate result */
 		*winning_player = PlayMatch(player_move, opponent_mov);
 
@@ -515,6 +576,71 @@ bool FileExists(const TCHAR *fileName)
 }
 
 
+int VersusReplayOptionCheck(int replay_choice,int index)
+{
+	DWORD wait_code;
+	int retVal = 0;
+	int err;
+	
+
+	char message_send[MAX_MESSAGE];
+
+	sendthread_s packet;
+
+	// Fill the client answer in the global array
+	replay_arr[index] = replay_choice;
+
+	// Signal that i choose and fill the client answer
+
+	/* Signal opponent thread */
+	retVal = ReleaseSemaphore(com_sem[index], 1, NULL);
+	if (FALSE == retVal)
+	{
+		printf("Error when releasing com_sem\n");
+
+		return ERROR_CODE;
+	}
+
+	// wait for the other client to choose what to do
+	wait_code = WaitForSingleObject(com_sem[!index], INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for com_sem\n");
+		return ERROR_CODE;
+	}
+
+	// If the client wants to go to main menu
+	if (replay_choice == 0) return 0;
+
+	// If the client wants to play again 
+
+	// if the opponent wants to play too
+	if (replay_arr[!index] == 1) return 1;
+	// if opponent quit
+	else
+	{
+
+		/*---------------------------- send SERVER_NO_OPPONENTS -----------------------------*/
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", SERVER_OPPONENT_QUIT);
+		if (err == 0 || err == EOF)
+		{
+			printf("Error: can't create the message for the client\n");
+			return ERROR_CODE;
+		}
+		packet.array_t = message_send;
+		packet.array_size = strlen(message_send);
+
+		//activate the send thread and get his exit code
+		err = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
+		//if the thread setup failed or the thread function itself failed
+		if (err != 0)  return err;
+		
+		return 0;
+	}
+
+}
+
+
 int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int read_write)
 {
 	char fname[] = "GameSession.txt";
@@ -574,7 +700,7 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 	char message_send[MAX_MESSAGE];
 	char message_type[MAX_MESSAGE];
 	char message_info[MAX_MESSAGE];
-
+	DWORD wait_code;
 	sendthread_s *packet;
 
 	int err = 0, ret = 0, exit_code = 0;
@@ -596,6 +722,15 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 	packet->sock = sock;
 
 	/*------------------------------- send SERVER_GAME_RESULT ---------------------------------*/
+
+	wait_code = WaitForSingleObject(username_mutex, INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for username_mutex\n");
+		return ERROR_CODE;
+	}
+	/* Critical section */
+	
 	//if the client won
 	if (winning_player == PLAYER_WON)
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
@@ -608,6 +743,13 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 	else
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s;%s;%s;%s\n", SERVER_GAME_RESULTS,
 			other_player, other_move, my_move, "No one");
+	
+	err = ReleaseMutex(username_mutex);
+	if (FALSE == err)
+	{
+		printf("Error when releasing username_mutex\n");
+		return ERROR_CODE;
+	}
 
 	if (err == 0 || err == EOF)
 	{

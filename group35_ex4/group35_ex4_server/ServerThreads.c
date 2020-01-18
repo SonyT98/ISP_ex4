@@ -42,26 +42,54 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 	arg = (ServiceThreadParams*)lpParam;
 
 	//variables
-	char username[MAX_USERNAME];
+	char *username = usernames[arg->index];
+
 	char player_move[MAX_MESSAGE];
 	char cpu_move[MAX_MESSAGE];
 	int err = 0;
-	int menu_selection = 0, winning_player = 0, replay = 0;
-
+	int menu_selection = 0, winning_player = 0, replay = 1;
+	int replay_choice = 0;
+	int ret_val = 0;
 	//get the client username and accept him
 	err = ClientUsername(arg->client_socket, username);
-	
-	while (!replay)
+	if (err == ERROR_CODE) return ERROR_CODE;
+
+	while (TRUE)
 	{
+
 		//get the main menu selection from the client
 		err = SelectFromMenu(arg->client_socket, &menu_selection);
+		if (err == ERROR_CODE) return ERROR_CODE;
 
-		switch (menu_selection)
-		{
-		case 1:
-			err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player);
-			err = EndGameStatus(arg->client_socket, username, "Server", player_move, cpu_move, winning_player, &replay);
-			break;
+		while(replay == 1)
+		{ 
+			switch (menu_selection)
+			{
+			case 1: // Play with the server
+				err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player);
+				if (err != 0) return ERROR_CODE;
+
+				err = EndGameStatus(arg->client_socket, username, "Server", player_move, cpu_move, winning_player, &replay);
+				if (err != 0) return ERROR_CODE;
+
+				break;
+			case 2: // Play versus another player
+
+				err = VersusGame(arg->client_socket,arg->index, player_move, cpu_move, &winning_player);
+				if (err != 0) return ERROR_CODE;
+
+				err = EndGameStatus(arg->client_socket, username, usernames[!arg->index], player_move, cpu_move, winning_player, &replay_choice);
+				if (err != 0) return ERROR_CODE;
+
+				replay = VersusReplayOptionCheck(replay_choice,arg->index);
+				if (replay == ERROR_CODE) return ERROR_CODE;
+				
+			case 3: // Leaderboard
+				replay = 0;
+			case 4:
+				return;
+
+			}
 		}
 	}
 }

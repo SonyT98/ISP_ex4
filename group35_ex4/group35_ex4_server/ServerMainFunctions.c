@@ -75,6 +75,7 @@ int serverMain()
 			printf("Error creating CheckExitThread\n");
 			goto server_cleanup_4;
 		}
+
 		// wait for ether exit or client trying to connect
 		int retVal = WaitForMultipleObjects(2, accept_exit_ThreadHandle, false, INFINITE);
 		if ((retVal != WAIT_OBJECT_0) && (retVal != WAIT_OBJECT_0 + 1))
@@ -83,6 +84,7 @@ int serverMain()
 			ret = ERROR_CODE;
 			goto server_cleanup_5;
 		}
+
 		// check Which thread has finished
 		if (retVal - WAIT_OBJECT_0 == 1)
 		{
@@ -93,6 +95,14 @@ int serverMain()
 		Ind = FindFirstUnusedThreadSlot();
 		if (Ind == MAX_NUM_CLIENTS) //no slot is available
 		{
+			/* Send to the client that no slots were found */
+			//
+			//
+			//
+			//
+			//
+			//
+
 			printf("No slots available for client, dropping the connection.\n");
 			closesocket(acceptSocket); //Closing the socket, dropping the connection.
 		}
@@ -106,7 +116,7 @@ int serverMain()
 			if (accept_exit_ThreadHandle[1] == NULL)
 			{
 				printf("Error creating CheckExitThread\n");
-				goto server_cleanup_3;
+				goto server_cleanup_5;
 			}
 
 		}
@@ -114,6 +124,13 @@ int serverMain()
 	}
 
 	/* EXIT procedure */
+	//
+	//
+	//
+	//
+	//
+	//
+	//
 
 
 
@@ -128,7 +145,6 @@ server_cleanup_3:
 server_cleanup_2:
 	if(closesocket(acceptParam.mainSocket) == SOCKET_ERROR)
 		printf("Failed to close MainSocket, error %ld. Ending program\n", WSAGetLastError());
-
 server_cleanup_1: //Close WINSOCK 
 	if (WSACleanup() == SOCKET_ERROR)
 		printf("Failed to close Winsocket, error %ld. Ending program.\n", WSAGetLastError());
@@ -245,9 +261,20 @@ int initializeSemaphores()
 		printf("Error creating com_sem[1]\n");
 		goto cleanup_5;
 	}
+	username_mutex = CreateMutex(NULL, FALSE, NULL);
+	if (username_mutex == NULL)
+	{
+		printf("Error creating username_mutex\n");
+		goto cleanup_6;
+	}
+
+
 	// all inits went well
 	return 0;
-
+cleanup_7:
+	CloseHandle(username_mutex);
+cleanup_6:
+	CloseHandle(com_sem[1]);
 cleanup_5:
 	CloseHandle(com_sem[0]);
 cleanup_4:
@@ -289,7 +316,7 @@ static int FindFirstUnusedThreadSlot()
 
 void closeSemaphores()
 {
-
+	CloseHandle(username_mutex);
 	CloseHandle(com_sem[1]);
 	CloseHandle(com_sem[0]);
 	CloseHandle(com_file_mutex);

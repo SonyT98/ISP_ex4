@@ -350,6 +350,7 @@ int findOpponentBarrier()
 	DWORD wait_code;
 	BOOL ret_val;
 	int ret = 0;
+	gameon = 0;
 
 	wait_code = WaitForSingleObject(find_opp_mutex, INFINITE);
 	if (WAIT_OBJECT_0 != wait_code)
@@ -364,11 +365,10 @@ int findOpponentBarrier()
 	if (barrier_count == MAX_NUM_CLIENTS)
 	{
 		// if this is the last thread to reach the barrier release all.
-		ret_val = ReleaseSemaphore(find_opp_sem, MAX_NUM_CLIENTS, NULL);
+		ret_val = SetEvent(find_opp_event);
 		if (FALSE == ret_val)
 		{
 			printf("Error when releasing find_opp_sem\n");
-			
 			ret = ERROR_CODE;
 		}
 	}
@@ -381,10 +381,9 @@ int findOpponentBarrier()
 	}
 
 	// if the up barrier_sem failed, return ERROR_CODE
-	if (ret == ERROR_CODE)
-		return ERROR_CODE;
+	if (ret == ERROR_CODE) return ERROR_CODE;
 
-	wait_code = WaitForSingleObject(find_opp_sem, WAIT_FOR_OPP_TIME); // Need to change the timeout to 30 sec
+	wait_code = WaitForSingleObject(find_opp_event, WAIT_FOR_OPP_TIME); // Need to change the timeout to 30 sec
 
 	if (WAIT_OBJECT_0 == wait_code)
 	{
@@ -398,7 +397,16 @@ int findOpponentBarrier()
 
 		/* critical section */
 		barrier_count = barrier_count - 1;
-
+		gameon = 1;
+		if (barrier_count == 0)
+		{
+			ret_val = ResetEvent(find_opp_event);
+			if (FALSE == ret_val)
+			{
+				printf("Error when releasing find_opp_sem\n");
+				ret = ERROR_CODE;
+			}
+		}
 		ret_val = ReleaseMutex(find_opp_mutex);
 		if (FALSE == ret_val)
 		{
@@ -419,8 +427,23 @@ int findOpponentBarrier()
 
 		/* critical section */
 		barrier_count = barrier_count -1;
-		if(barrier_count == 1) ret = OPPONENT_WASENT_FOUND;
+		if (barrier_count == 0)
+		{
+			if (gameon == 0)	ret = OPPONENT_WASENT_FOUND;
+			else				ret = OPPONENT_FOUND;
+		}
 		else ret = OPPONENT_FOUND;
+		
+		// reset the event
+		if (barrier_count == 0)
+		{
+			ret_val = ResetEvent(find_opp_event);
+			if (FALSE == ret_val)
+			{
+				printf("Error when releasing find_opp_sem\n");
+				ret = ERROR_CODE;
+			}
+		}
 
 		ret_val = ReleaseMutex(find_opp_mutex);
 		if (FALSE == ret_val)

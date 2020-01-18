@@ -13,10 +13,10 @@ extern ServiceThreadParams ThreadInputs[MAX_NUM_CLIENTS];
 leaderboard_player *first_player;
 
 // find opponent barirer semaphre
-extern HANDLE find_opp_sem;
+extern HANDLE find_opp_event;
 extern HANDLE find_opp_mutex;
 extern int barrier_count;
-
+extern int gameon;
 // file mutex
 extern HANDLE com_file_mutex ;
 

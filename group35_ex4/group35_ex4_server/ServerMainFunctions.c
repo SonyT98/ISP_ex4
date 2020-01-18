@@ -213,10 +213,10 @@ int initializeSemaphores()
 
 
 	// Initialize Find opponent barrier
-	find_opp_sem = CreateSemaphore(NULL, 0, 2, NULL);
-	if (find_opp_sem == NULL)
+	find_opp_event = CreateEvent(NULL ,TRUE,FALSE, NULL);
+	if (find_opp_event == NULL)
 	{
-		printf("Error creating find_opp_sem\n");
+		printf("Error creating find_opp_event\n");
 		goto cleanup_1;
 	}
 
@@ -256,7 +256,7 @@ cleanup_4:
 cleanup_3:
 	CloseHandle(find_opp_mutex);
 cleanup_2:
-	CloseHandle(find_opp_sem);
+	CloseHandle(find_opp_event);
 cleanup_1:
 	return ERROR_CODE;
 }
@@ -295,7 +295,7 @@ void closeSemaphores()
 	CloseHandle(com_sem[0]);
 	CloseHandle(com_file_mutex);
 	CloseHandle(find_opp_mutex);
-	CloseHandle(find_opp_sem);
+	CloseHandle(find_opp_event);
 }
 
 

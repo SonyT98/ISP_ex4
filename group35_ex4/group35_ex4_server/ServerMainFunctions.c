@@ -104,6 +104,7 @@ int serverMain()
 			//
 
 			printf("No slots available for client, dropping the connection.\n");
+			//server denied
 			closesocket(acceptSocket); //Closing the socket, dropping the connection.
 		}
 	

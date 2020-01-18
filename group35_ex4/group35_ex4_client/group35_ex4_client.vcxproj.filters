@@ -47,5 +47,8 @@
     <ClInclude Include="ClientMainFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HardCodedData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

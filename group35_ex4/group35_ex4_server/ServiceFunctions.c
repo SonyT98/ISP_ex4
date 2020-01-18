@@ -411,7 +411,6 @@ int findOpponentBarrier()
 	DWORD wait_code;
 	BOOL ret_val;
 	int ret = 0;
-	gameon = 0;
 
 	wait_code = WaitForSingleObject(find_opp_mutex, INFINITE);
 	if (WAIT_OBJECT_0 != wait_code)
@@ -422,6 +421,7 @@ int findOpponentBarrier()
 	
 	/* critical section */
 	barrier_count = barrier_count + 1;
+	gameon = 0;
 
 	if (barrier_count == MAX_NUM_CLIENTS)
 	{

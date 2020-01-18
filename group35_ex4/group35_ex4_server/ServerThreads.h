@@ -21,5 +21,12 @@ DWORD AcceptClientThread(LPSTR lpParam);
 */
 DWORD WINAPI CheckExitThread(LPSTR lpParam);
 
+/*
+*	This is the main thread that handles each client.
+*	lpParam should be type ServiceThreadParams
+*/
+
+DWORD WINAPI ServiceThread(LPSTR lpParam);
+
 #endif // __SERVERTHREADS_H__
 

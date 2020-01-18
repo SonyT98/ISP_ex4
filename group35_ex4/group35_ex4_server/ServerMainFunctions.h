@@ -73,4 +73,13 @@ int FreeLeaderboard(leaderboard_player **first_p);
 */
 void ReplaceCommaStr(char *line_str);
 
+/*
+* sends server denied massage to the client 
+* commas with space for sscanf
+* Input Argument:
+*	acceptSocket	- the socket to the client beeing denied.
+* Return:
+*		return -1 if error accured, 0 else.
+*/
+int sendServerDenied(SOCKET acceptSocket);
 #endif // __SERVERMAINFUNCTIONS_H__

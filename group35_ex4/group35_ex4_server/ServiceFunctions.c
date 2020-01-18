@@ -350,6 +350,7 @@ int findOpponentBarrier()
 	DWORD wait_code;
 	BOOL ret_val;
 	int ret = 0;
+	int playmatch = 0;
 
 	wait_code = WaitForSingleObject(find_opp_mutex, INFINITE);
 	if (WAIT_OBJECT_0 != wait_code)
@@ -419,7 +420,7 @@ int findOpponentBarrier()
 
 		/* critical section */
 		barrier_count = barrier_count -1;
-		if(barrier_count == 1) ret = OPPONENT_WASENT_FOUND;
+		if (barrier_count == 0) ret = OPPONENT_WASENT_FOUND;
 		else ret = OPPONENT_FOUND;
 
 		ret_val = ReleaseMutex(find_opp_mutex);

@@ -94,6 +94,7 @@ int serverMain()
 		if (Ind == MAX_NUM_CLIENTS) //no slot is available
 		{
 			printf("No slots available for client, dropping the connection.\n");
+			//server denied
 			closesocket(acceptSocket); //Closing the socket, dropping the connection.
 		}
 	

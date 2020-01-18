@@ -127,6 +127,7 @@
     <ClInclude Include="..\Shared\SocketSendRecvTools.h" />
     <ClInclude Include="..\Shared\ThreadFunctions.h" />
     <ClInclude Include="ClientMainFunctions.h" />
+    <ClInclude Include="HardCodedData.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

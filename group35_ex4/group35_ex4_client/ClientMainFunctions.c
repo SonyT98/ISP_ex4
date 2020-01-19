@@ -132,6 +132,8 @@ int initializeConnection(SOCKET *sock, char *server_adr, char *server_port)
 		return CONNECTION_FAILED;
 	}
 
+	printf("Connected to server on <%s>:<%s>", server_adr, server_port);
+
 	return 0;
 }
 

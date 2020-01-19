@@ -11,6 +11,11 @@ int clientMain(char *username, char *server_adr, char *server_port)
 	int close_socket = 0;
 	int main_menu_selection = 0;
 
+	sendthread_s packet;
+
+	char message_type[MAX_MESSAGE];
+	char message_info[MAX_MESSAGE];
+
 	// Initialize Winsock.
 	WSADATA wsaData;
 	int StartupRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -50,8 +55,13 @@ int clientMain(char *username, char *server_adr, char *server_port)
 		else if (retVal != 0)
 			continue; 
 
+
+		packet.sock = client_sock;
+
 		while (TRUE)
 		{
+
+
 
 		}
 	}

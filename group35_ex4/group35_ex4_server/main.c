@@ -6,7 +6,7 @@
 #include "ServerThreads.h"
 
 
-int main()
+int main(int argc, char *argv[])
 {
-	return serverMain();
+	 return serverMain(argc, argv);
 }

@@ -278,6 +278,7 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 	else
 	{
 
+
 		/*---------------------------- send SERVER_INVITE -----------------------------*/
 		wait_code = WaitForSingleObject(username_mutex, INFINITE);
 		if (WAIT_OBJECT_0 != wait_code)
@@ -313,6 +314,10 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 
 		while (replay == 1)
 		{
+			// reset the event for communicating the game over menu
+			ResetEvent(com_event[!index]);
+
+
 			flag = MakeSureFileExist();
 			if (flag == ERROR_CODE) return ERROR_CODE;
 
@@ -330,7 +335,7 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 				retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
 				if (FALSE == retVal)
 				{
-					printf("Error when releasing find_opp_sem\n");
+					printf("Error when releasing com_sem\n");
 
 					return ERROR_CODE;
 				}
@@ -410,6 +415,10 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 			if (err != 0)
 				return ERROR_CODE;
 
+			/* Update leader board */
+
+
+			/* Check if the opponent wants to play again and update replay */
 			replay = VersusReplayOptionCheck(sock,replay_choice,index);
 			if (replay == ERROR_CODE)
 				return ERROR_CODE;
@@ -442,7 +451,7 @@ int findOpponentBarrier()
 		ret_val = SetEvent(find_opp_event);
 		if (FALSE == ret_val)
 		{
-			printf("Error when releasing find_opp_sem\n");
+			printf("Error setting find_opp_sem\n");
 			ret = ERROR_CODE;
 		}
 	}
@@ -595,6 +604,7 @@ int VersusReplayOptionCheck(SOCKET sock,int replay_choice,int index)
 	int retVal = 0;
 	int err;
 	
+	
 
 	char message_send[MAX_MESSAGE];
 
@@ -606,26 +616,29 @@ int VersusReplayOptionCheck(SOCKET sock,int replay_choice,int index)
 	// Signal that i choose and fill the client answer
 
 	/* Signal opponent thread */
-	retVal = ReleaseSemaphore(com_sem[index], 1, NULL);
+	retVal = SetEvent(com_event[index]);
 	if (FALSE == retVal)
 	{
-		printf("Error when releasing com_sem\n");
+		printf("Error when setting com_event\n");
 
 		return ERROR_CODE;
 	}
 
-	// wait for the other client to choose what to do
-	wait_code = WaitForSingleObject(com_sem[!index], INFINITE);
-	if (WAIT_OBJECT_0 != wait_code)
-	{
-		printf("Error when waiting for com_sem\n");
-		return ERROR_CODE;
-	}
-
+	
 	// If the client wants to go to main menu
-	if (replay_choice == 0) return 0;
+	if (replay_choice == 0)
+	{
+		return 0;
+	}
 
 	// If the client wants to play again 
+	// wait for the other client to choose what to do
+	wait_code = WaitForSingleObject(com_event[!index], INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for com_event\n");
+		return ERROR_CODE;
+	}
 
 	// if the opponent wants to play too
 	if (replay_arr[!index] == 1) return 1;
@@ -634,7 +647,7 @@ int VersusReplayOptionCheck(SOCKET sock,int replay_choice,int index)
 	{
 		packet.sock = sock;
 		/*---------------------------- send SERVER_NO_OPPONENTS -----------------------------*/
-		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", SERVER_OPPONENT_QUIT);
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", SERVER_OPPONENT_QUIT,usernames[!index]);
 		if (err == 0 || err == EOF)
 		{
 			printf("Error: can't create the message for the client\n");
@@ -719,8 +732,8 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 	int err = 0, ret = 0, exit_code = 0;
 
 	//updating leaderboard
-	//err = UpdateLeaderboard(username, winning_player);
-	//if (err == ERROR_CODE) { ret = err; goto return_ret;}
+	err = UpdateLeaderboard(username, winning_player);
+	if (err == ERROR_CODE) { ret = err; goto return_ret;}
 
 	//malloc for the sendthread_s struct
 	packet = (sendthread_s*)malloc(sizeof(sendthread_s));
@@ -1161,16 +1174,31 @@ return_ret:
 int UpdateLeaderboard(char *username, int gamestat)
 {
 	int err = 0;
-
+	DWORD wait_code;
+	int retVal = 0, ret = 0;
 	leaderboard_player *current = NULL;
 
+	wait_code = WaitForSingleObject(leaderboard_mutex, INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for leaderboard_mutex\n");
+		return ERROR_CODE;
+	}
+	/* Critical section */
 	err = SearchInList(&current, username, gamestat, &first_player);
-	if (err == ERROR_CODE) { return err; }
+	if (err == ERROR_CODE) { ret = err; goto release; }
 
 	err = InsertPlayer(&current, &first_player);
 
 	err = WriteToFile(&first_player);
-	if (err == ERROR_CODE) { return err; }
+	if (err == ERROR_CODE) { ret = err; goto release;}
+release:
+	retVal = ReleaseMutex(leaderboard_mutex);
+	if (FALSE == retVal)
+	{
+		printf("Error when releasing leaderboard_mutex\n");
+		return ERROR_CODE;
+	}
 
 	return err;
 }

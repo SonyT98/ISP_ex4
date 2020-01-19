@@ -215,3 +215,58 @@ int GameResultDisplay(char *match_info)
 
 	return 0;
 }
+
+
+
+int GameOverMenu(SOCKET sock)
+{
+	char message_send[MAX_MESSAGE];
+	char user_pick_s[MAX_LINE];
+
+	int user_pick_i = -1;
+	sendthread_s packet;
+
+	int exit_code = 0, err = 0;
+
+	packet.sock = sock;
+
+	//menu selection for the user
+	printf("Choose what to do next:\n");
+	printf("1. Play again\n2. Return to the main menu\n");
+	err = scanf_s("%s", user_pick_s, MAX_LINE);
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: Reading from the console\n");
+		return ERROR_CODE;
+	}
+	// check the user pick
+	if (STRINGS_ARE_EQUAL(user_pick_s, "1") || STRINGS_ARE_EQUAL(user_pick_s, "2"))
+	{
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_VERSUS);
+	}
+	else
+	{
+		printf("Error: This Option is not available or wrong\n");
+		return ERROR_CODE;
+	}
+
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: can't create the message for the client\n");
+		return ERROR_CODE;
+	}
+
+	/*---------------------------- send client main menu pick -----------------------------*/
+
+	packet.array_size = strlen(message_send);
+	packet.array_t = message_send;
+
+	//activate the send thread and get his exit code
+	exit_code = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code == ERROR_CODE)  return ERROR_CODE;
+	else if (exit_code != 0)  return CONNECTION_LOST;
+
+	return 0;
+
+}

@@ -58,4 +58,13 @@ void StringUpper(char *a);
 */
 int GameResultDisplay(char *match_info);
 
+/*
+*	GameOverMenu shows the game over menu to the user and wait for response then send it to the server.
+* Input Arguments:
+*	sock - socket to be updated as a connected socket to the server.
+
+*/
+int GameOverMenu(SOCKET sock);
+
+
 #endif // __USERINTERFACEFUNCTIONS_H__

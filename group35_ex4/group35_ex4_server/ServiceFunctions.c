@@ -691,7 +691,7 @@ int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int re
 			printf("Error while trying to open %s\n", fname);
 			ret = ERROR_CODE;
 		}
-		retVal = fscanf_s(fp, "%s,%d", player_move_s,8, player_move_i);
+		retVal = fscanf_s(fp, "%[^,],%d", player_move_s,8, player_move_i);
 		fclose(fp);
 	
 	}

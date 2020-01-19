@@ -128,6 +128,7 @@ int PlayerMoveRequest(SOCKET sock)
 	int exit_code = 0, err = 0;
 
 	packet.sock = sock;
+
 	//ask the ser to pick his move
 	printf("Choose a move from the list: Rock, Paper, Scissors, Lizard or Spock:\n");
 	err = scanf_s("%s", user_pick_s, MAX_LINE);
@@ -185,4 +186,32 @@ void StringUpper(char *a)
 	}
 }
 
-int GameResultDisplay()
+int GameResultDisplay(char *match_info)
+{
+	//variables
+	char match_info_print[4][MAX_MESSAGE] = {"","","",""};
+
+	int  game_info = 0,i = 0;
+	int info_length = 0;
+	//we will go over the information and assign the strings to their correct place.
+	while (match_info[i] != '\0')
+	{
+		match_info_print[game_info][i-info_length] = match_info[i];
+		//if the info is seperate by ; we want to go to the next message.
+		if (match_info[i] == ';')
+		{
+			match_info_print[game_info][i - info_length] = '\0';
+			game_info++;
+			info_length = i + 1;
+		}
+		i++;
+	}
+	match_info_print[game_info][i - info_length] = '\0';
+
+	//now we have seperate the match information, and we want to present it to the client
+	printf("You played: %s\n", match_info_print[2]);
+	printf("%s played: %s\n", match_info_print[0], match_info_print[1]);
+	printf("%s won!\n", match_info_print[3]);
+
+	return 0;
+}

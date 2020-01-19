@@ -212,7 +212,6 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	sendthread_s packet;
 
 	int size_arr = 0, ret = 0, exit_code = 0, err = 0, wait_mul = 1;
-	int client_choice = 0;
 
 	packet.sock = sock;
 
@@ -261,7 +260,7 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	//the server send game result
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_GAME_RESULTS))
 	{
-		//SERVER GAME RESULT
+		err = GameResultDisplay(message_info);
 		*menu_waittime = 1;
 	}
 	//server send the game over menu

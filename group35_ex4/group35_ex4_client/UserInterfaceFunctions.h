@@ -49,4 +49,13 @@ int PlayerMoveRequest(SOCKET sock);
 */
 void StringUpper(char *a);
 
+/*
+* GameResultDisplay will display the end of match result for the client.
+* Input Arguments:
+*	message_info - the match information the server send to the client.
+* Return :
+*	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
+*/
+int GameResultDisplay(char *match_info);
+
 #endif // __USERINTERFACEFUNCTIONS_H__

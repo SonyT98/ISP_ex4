@@ -57,7 +57,7 @@ int serverMain(int argc, char *argv[])
 		goto server_cleanup_2;
 	}
 	
-	//Intialize the leaderboard struct
+	//Intialize the leaderboard structure
 	retVal = IntializeLeaderboard(&first_player);
 	if (retVal == ERROR_CODE)
 	{
@@ -473,6 +473,17 @@ int sendServerDenied(SOCKET acceptSocket)
 	char message_send[MAX_MESSAGE];
 
 	sendthread_s packet;
+
+	/*----------------------------recv CLIENT_REQUEST-----------------------------*/
+	packet.array_t = NULL;
+	packet.array_size = 0;
+
+	//activate the recv thread and get his exit code
+	err = ActivateThread((void*)&packet, 0, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (err != 0)  return  ERROR_CODE ;
+
+	free(packet.array_t);
 
 
 	/*---------------------------- send SERVER_NO_OPPONENTS -----------------------------*/

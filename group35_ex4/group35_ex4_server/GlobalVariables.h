@@ -7,6 +7,7 @@
 #include "GlobalVariables.h"
 
 extern HANDLE ThreadHandles[MAX_NUM_CLIENTS];
+extern LPWORD ThreadId[MAX_NUM_CLIENTS];
 extern ServiceThreadParams ThreadInputs[MAX_NUM_CLIENTS];
 
 extern char usernames[MAX_NUM_CLIENTS][MAX_USERNAME];

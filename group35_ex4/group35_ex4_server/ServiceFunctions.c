@@ -220,7 +220,7 @@ int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_pla
 
 		*winning_player = PlayMatch(player_move, cpu_move);
 
-		err = EndGameStatus(sock, username, "Server", player_move, cpu_move, winning_player, &replay);
+		err = EndGameStatus(sock, username, "Server", player_move_s, cpu_move_s, *winning_player, &replay);
 		if (err != 0)
 		{
 			ret = err;
@@ -252,9 +252,9 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 	// find opponent barrier
 	retVal = findOpponentBarrier();
 
+	packet.sock = sock;
 
-
-	if (retVal = ERROR_CODE) return ERROR_CODE;
+	if (retVal == ERROR_CODE) return ERROR_CODE;
 	// Opponent wasn't found
 	else if (retVal == OPPONENT_WASENT_FOUND)
 	{
@@ -406,11 +406,11 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 
 			/* Calculate result */
 			*winning_player = PlayMatch(player_move, opponent_mov);
-			err = EndGameStatus(sock, usernames[index], usernames[!index], player_move_s, opp_move_s, *winning_player, &replay_choice);
+			err = EndGameStatus(sock, usernames[index], usernames[!index], player_move_s, opponent_move_s, *winning_player, &replay_choice);
 			if (err != 0)
 				return ERROR_CODE;
 
-			replay = VersusReplayOptionCheck(replay_choice,index);
+			replay = VersusReplayOptionCheck(sock,replay_choice,index);
 			if (replay == ERROR_CODE)
 				return ERROR_CODE;
 		}
@@ -589,7 +589,7 @@ bool FileExists(const TCHAR *fileName)
 }
 
 
-int VersusReplayOptionCheck(int replay_choice,int index)
+int VersusReplayOptionCheck(SOCKET sock,int replay_choice,int index)
 {
 	DWORD wait_code;
 	int retVal = 0;
@@ -632,7 +632,7 @@ int VersusReplayOptionCheck(int replay_choice,int index)
 	// if opponent quit
 	else
 	{
-
+		packet.sock = sock;
 		/*---------------------------- send SERVER_NO_OPPONENTS -----------------------------*/
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", SERVER_OPPONENT_QUIT);
 		if (err == 0 || err == EOF)
@@ -691,7 +691,7 @@ int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int re
 			printf("Error while trying to open %s\n", fname);
 			ret = ERROR_CODE;
 		}
-		retVal = fscanf_s(fp, "%[^,],%d", player_move_s,8, player_move_i);
+		retVal = fscanf_s(fp, "%[^,],%d", player_move_s,10, player_move_i);
 		fclose(fp);
 	
 	}

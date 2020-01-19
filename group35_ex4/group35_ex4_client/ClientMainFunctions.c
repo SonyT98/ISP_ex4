@@ -246,6 +246,8 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	// the server inform the client that a match going to start
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_INVITE))
 		*menu_waittime = 1;
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_NO_OPPONENTS))
+		*menu_waittime = 1;
 	//if the server ask the client to play his move
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_PLAYER_MOVE_REQUEST))
 	{
@@ -266,10 +268,16 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	//server send the game over menu
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_GAME_OVER_MENU))
 	{
-		//SERVER GAME OVER MENU
+		err = GameOverMenu(sock);
+		if (err != 0) { ret = err; goto packet_cleanup; }
+		if (*main_menu_selection == VERSUS_GAME_SELECTION)
+			//if we in versus, we need to wait 10 minutes for the other client
+			*menu_waittime = 2;
+		else
+			*menu_waittime = 1;
 	}
 	//server send the server opponent quit
-	else if (STRINGS_ARE_EQUAL(message_type, SERVER_GAME_OVER_MENU))
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_OPPONENT_QUIT))
 	{
 		printf("<%s> has left the game!\n", message_info);
 		*menu_waittime = 1;

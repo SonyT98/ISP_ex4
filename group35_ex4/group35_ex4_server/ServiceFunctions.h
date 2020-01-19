@@ -133,12 +133,13 @@ int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int re
 	Arguments:
 			replay_choice	- 1 if the client wants to play again. 0 if client wants to gotomain menu
 			index			- index of the client thread.
+			sock			- the socket of the client connection.
 	Return:
 *		return OPPONENT_STAYED_GAME		1	- if the opponent wants to play again
 *		return OPPONENT_QUIT_GAME		2   - if the opponent doesn't want to play again
 *		return ERROR_CODE			   -1	- if an error accrued
 */
-int VersusReplayOptionCheck(int replay_choice, int index);
+int VersusReplayOptionCheck(SOCKET sock, int replay_choice, int index);
 
 
 /*

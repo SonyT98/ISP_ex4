@@ -119,8 +119,7 @@ int serverMain(int argc, char *argv[])
 		{
 			(ThreadInputs[Ind]).client_socket = acceptParam.AcceptSocket;
 			ThreadInputs[Ind].index = Ind;
-			//ThreadHandles[Ind] = CreateThreadSimple((LPTHREAD_START_ROUTINE)ServiceThread, &(ThreadInputs[Ind]), NULL);
-			ServiceThread((void*)&(ThreadInputs[Ind]));
+			ThreadHandles[Ind] = CreateThreadSimple((LPTHREAD_START_ROUTINE)ServiceThread, &ThreadId[Ind],(void*)&ThreadInputs[Ind]);
 			if (accept_exit_ThreadHandle[1] == NULL)
 			{
 				printf("Error creating CheckExitThread\n");
@@ -243,7 +242,7 @@ int initializeSemaphores()
 		goto cleanup_1;
 	}
 
-	find_opp_mutex = CreateSemaphore(NULL, 1, 1, NULL);
+	find_opp_mutex = CreateMutex(NULL, FALSE, NULL);
 	if (find_opp_mutex == NULL)
 	{
 		printf("Error creating find_opp_mutex\n");

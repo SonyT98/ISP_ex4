@@ -42,6 +42,7 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 {
 	ServiceThreadParams *arg = NULL;
 
+
 	arg = (ServiceThreadParams*)lpParam;
 
 	//variables
@@ -74,7 +75,7 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 		switch (menu_selection)
 		{
 		case 1: // Play with the server
-			err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player);
+			err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player,username);
 			if (err != 0)
 			{
 				closesocket(arg->client_socket);

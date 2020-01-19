@@ -216,8 +216,6 @@ int GameResultDisplay(char *match_info)
 	return 0;
 }
 
-
-
 int GameOverMenu(SOCKET sock)
 {
 	char message_send[MAX_MESSAGE];
@@ -240,16 +238,15 @@ int GameOverMenu(SOCKET sock)
 		return ERROR_CODE;
 	}
 	// check the user pick
-	if (STRINGS_ARE_EQUAL(user_pick_s, "1") || STRINGS_ARE_EQUAL(user_pick_s, "2"))
-	{
-		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_VERSUS);
-	}
+	if (STRINGS_ARE_EQUAL(user_pick_s, "1"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_REPLAY);
+	else if (STRINGS_ARE_EQUAL(user_pick_s, "2"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_MAIN_MENU);
 	else
 	{
 		printf("Error: This Option is not available or wrong\n");
 		return ERROR_CODE;
 	}
-
 	if (err == 0 || err == EOF)
 	{
 		printf("Error: can't create the message for the client\n");

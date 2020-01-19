@@ -25,7 +25,6 @@ TransferResult_t SendBuffer( const char* Buffer, int BytesToSend, SOCKET sd )
 		BytesTransferred = send (sd, CurPlacePtr, RemainingBytesToSend, 0);
 		if ( BytesTransferred == SOCKET_ERROR ) 
 		{
-			printf("send() failed, error %d\n", WSAGetLastError() );
 			return TRNS_FAILED;
 		}
 		
@@ -75,7 +74,6 @@ TransferResult_t ReceiveBuffer( char* OutputBuffer, int BytesToReceive, SOCKET s
 		BytesJustTransferred = recv(sd, CurPlacePtr, RemainingBytesToReceive, 0);
 		if ( BytesJustTransferred == SOCKET_ERROR ) 
 		{
-			printf("recv() failed, error %d\n", WSAGetLastError() );
 			return TRNS_FAILED;
 		}		
 		else if ( BytesJustTransferred == 0 )
@@ -281,6 +279,7 @@ int MessageCut(char *message, int message_size, char* message_type, char *info)
 	if (info_or_type == 0)
 	{
 		info[0] = '\0';
+		message_type[i - 1] = '\0';
 		return 0;
 	}
 	// set info as string

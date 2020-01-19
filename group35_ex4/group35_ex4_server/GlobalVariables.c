@@ -2,6 +2,7 @@
 
 
 HANDLE ThreadHandles[MAX_NUM_CLIENTS] = { NULL };
+LPWORD ThreadId[MAX_NUM_CLIENTS] = { NULL };
 ServiceThreadParams ThreadInputs[MAX_NUM_CLIENTS];
 
 char usernames[MAX_NUM_CLIENTS][MAX_USERNAME] = {"", ""};

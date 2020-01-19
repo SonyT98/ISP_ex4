@@ -27,6 +27,8 @@ extern HANDLE com_event[MAX_NUM_CLIENTS];
 
 extern HANDLE username_mutex;
 
+extern HANDLE leaderboard_mutex ;
+
 extern int replay_arr[MAX_NUM_CLIENTS];
 
 #endif // __GLOBALVARIABLES_H__

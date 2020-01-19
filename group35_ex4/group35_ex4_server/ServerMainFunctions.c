@@ -222,7 +222,7 @@ int initializeListeningSocket(AcceptSocketParams *acceptParams,char* server_port
 	return ret;
 
 cleanup_1:
-	if (closesocket(MainSocket) == SOCKET_ERROR)
+	if (closesocket(*MainSocket) == SOCKET_ERROR)
 		printf("Failed to close MainSocket, error %ld. Ending program\n", WSAGetLastError());
 
 	return ret;
@@ -240,21 +240,18 @@ int initializeSemaphores()
 		printf("Error creating find_opp_event\n");
 		goto cleanup_1;
 	}
-
 	find_opp_mutex = CreateMutex(NULL, FALSE, NULL);
 	if (find_opp_mutex == NULL)
 	{
 		printf("Error creating find_opp_mutex\n");
 		goto cleanup_2;
 	}
-
 	com_file_mutex = CreateMutex(NULL, FALSE, NULL);
 	if (com_file_mutex == NULL)
 	{
 		printf("Error creating com_file_mutex\n");
 		goto cleanup_3;
 	}
-
 	com_sem[0] = CreateSemaphore(NULL, 0, 1, NULL);
 	if (com_sem[0] == NULL)
 	{
@@ -273,7 +270,6 @@ int initializeSemaphores()
 		printf("Error creating username_mutex\n");
 		goto cleanup_6;
 	}
-
 	com_event[0] = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (com_event[0] == NULL)
 	{
@@ -286,10 +282,18 @@ int initializeSemaphores()
 		printf("Error creating com_event[1]\n");
 		goto cleanup_8;
 	}
+	leaderboard_mutex = CreateMutex(NULL, FALSE, NULL);
+	if (leaderboard_mutex == NULL)
+	{
+		printf("Error creating leaderboard_mutex\n");
+		goto cleanup_9;
+	}
+
 
 	// all initialization went well
 	return 0;
-
+cleanup_10:
+	CloseHandle(leaderboard_mutex);
 cleanup_9:
 	CloseHandle(com_event[1]);
 cleanup_8:
@@ -340,6 +344,8 @@ static int FindFirstUnusedThreadSlot()
 void closeSemaphores()
 {
 
+
+	CloseHandle(leaderboard_mutex);
 	CloseHandle(com_event[1]);
 	CloseHandle(com_event[0]);
 	CloseHandle(username_mutex);

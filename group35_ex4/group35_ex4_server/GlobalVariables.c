@@ -20,11 +20,13 @@ int gameon = 0;
 
 // file mutex
 HANDLE com_file_mutex = NULL;
-
+// versus comunication handles
 HANDLE com_sem[MAX_NUM_CLIENTS] = { NULL };
 HANDLE com_event[MAX_NUM_CLIENTS] = { NULL };
 
-extern HANDLE username_mutex = NULL;
+HANDLE username_mutex = NULL;
 
+// leaderboaed mutex
+HANDLE leaderboard_mutex = NULL;
 // Versus game replay flag
 int replay_arr[MAX_NUM_CLIENTS];

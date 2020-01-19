@@ -415,6 +415,10 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 			if (err != 0)
 				return ERROR_CODE;
 
+			/* Update leader board */
+
+
+			/* Check if the opponent wants to play again and update replay */
 			replay = VersusReplayOptionCheck(sock,replay_choice,index);
 			if (replay == ERROR_CODE)
 				return ERROR_CODE;
@@ -728,8 +732,8 @@ int EndGameStatus(	SOCKET sock, char *username, char *other_player, char *my_mov
 	int err = 0, ret = 0, exit_code = 0;
 
 	//updating leaderboard
-	//err = UpdateLeaderboard(username, winning_player);
-	//if (err == ERROR_CODE) { ret = err; goto return_ret;}
+	err = UpdateLeaderboard(username, winning_player);
+	if (err == ERROR_CODE) { ret = err; goto return_ret;}
 
 	//malloc for the sendthread_s struct
 	packet = (sendthread_s*)malloc(sizeof(sendthread_s));
@@ -1170,16 +1174,31 @@ return_ret:
 int UpdateLeaderboard(char *username, int gamestat)
 {
 	int err = 0;
-
+	DWORD wait_code;
+	int retVal = 0, ret = 0;
 	leaderboard_player *current = NULL;
 
+	wait_code = WaitForSingleObject(leaderboard_mutex, INFINITE);
+	if (WAIT_OBJECT_0 != wait_code)
+	{
+		printf("Error when waiting for leaderboard_mutex\n");
+		return ERROR_CODE;
+	}
+	/* Critical section */
 	err = SearchInList(&current, username, gamestat, &first_player);
-	if (err == ERROR_CODE) { return err; }
+	if (err == ERROR_CODE) { ret = err; goto release; }
 
 	err = InsertPlayer(&current, &first_player);
 
 	err = WriteToFile(&first_player);
-	if (err == ERROR_CODE) { return err; }
+	if (err == ERROR_CODE) { ret = err; goto release;}
+release:
+	retVal = ReleaseMutex(leaderboard_mutex);
+	if (FALSE == retVal)
+	{
+		printf("Error when releasing leaderboard_mutex\n");
+		return ERROR_CODE;
+	}
 
 	return err;
 }

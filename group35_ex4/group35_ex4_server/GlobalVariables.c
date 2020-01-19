@@ -22,6 +22,7 @@ int gameon = 0;
 HANDLE com_file_mutex = NULL;
 
 HANDLE com_sem[MAX_NUM_CLIENTS] = { NULL };
+HANDLE com_event[MAX_NUM_CLIENTS] = { NULL };
 
 extern HANDLE username_mutex = NULL;
 

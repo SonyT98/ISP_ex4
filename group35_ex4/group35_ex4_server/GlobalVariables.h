@@ -23,6 +23,7 @@ extern int gameon;
 extern HANDLE com_file_mutex ;
 
 extern HANDLE com_sem[MAX_NUM_CLIENTS];
+extern HANDLE com_event[MAX_NUM_CLIENTS];
 
 extern HANDLE username_mutex;
 

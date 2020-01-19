@@ -8,7 +8,6 @@ int serverMain(int argc, char *argv[])
 	int Ind;
 	int retVal;
 	int ret = 0 ;
-	SOCKET acceptSocket = INVALID_SOCKET;
 
 	LPWORD accept_thread_id, exit_thread_id;
 	HANDLE accept_exit_ThreadHandle[2] = { NULL };
@@ -105,14 +104,14 @@ int serverMain(int argc, char *argv[])
 		if (Ind == MAX_NUM_CLIENTS) //no slot is available
 		{
 			/* Send to the client that no slots were found */
-			retVal =  sendServerDenied(acceptSocket);
+			retVal =  sendServerDenied(acceptParam.AcceptSocket);
 			if (retVal == ERROR_CODE)
 			{
 				ret = ERROR_CODE;
 				goto server_cleanup_6;
 			}
 			//server denied
-			closesocket(acceptSocket); //Closing the socket, dropping the connection.
+			closesocket(acceptParam.AcceptSocket); //Closing the socket, dropping the connection.
 		}
 	
 		else
@@ -275,9 +274,26 @@ int initializeSemaphores()
 		goto cleanup_6;
 	}
 
+	com_event[0] = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (com_event[0] == NULL)
+	{
+		printf("Error creating com_event[0]\n");
+		goto cleanup_7;
+	}
+	com_event[1] = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (com_event[1] == NULL)
+	{
+		printf("Error creating com_event[1]\n");
+		goto cleanup_8;
+	}
 
-	// all inits went well
+	// all initialization went well
 	return 0;
+
+cleanup_9:
+	CloseHandle(com_event[1]);
+cleanup_8:
+	CloseHandle(com_event[0]);
 cleanup_7:
 	CloseHandle(username_mutex);
 cleanup_6:
@@ -323,6 +339,9 @@ static int FindFirstUnusedThreadSlot()
 
 void closeSemaphores()
 {
+
+	CloseHandle(com_event[1]);
+	CloseHandle(com_event[0]);
 	CloseHandle(username_mutex);
 	CloseHandle(com_sem[1]);
 	CloseHandle(com_sem[0]);
@@ -472,6 +491,7 @@ int sendServerDenied(SOCKET acceptSocket)
 	char message_send[MAX_MESSAGE];
 
 	sendthread_s packet;
+	packet.sock = acceptSocket;
 
 	/*----------------------------recv CLIENT_REQUEST-----------------------------*/
 	packet.array_t = NULL;

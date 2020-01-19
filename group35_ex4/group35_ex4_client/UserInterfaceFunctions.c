@@ -52,15 +52,12 @@ int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_
 int MainMenuSelection(SOCKET sock, int *main_menu_selection)
 {
 	//variables
-	char message_type[MAX_MESSAGE];
 	char message_send[MAX_MESSAGE];
-	char message_info[MAX_MESSAGE];
 	char user_pick_s[MAX_LINE];
 
 	sendthread_s packet;
 
-
-	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
+	int exit_code = 0, err = 0;
 
 	packet.sock = sock;
 
@@ -118,6 +115,74 @@ int MainMenuSelection(SOCKET sock, int *main_menu_selection)
 	else if (exit_code != 0)  return CONNECTION_LOST; 
 
 	return 0;
+}
+
+int PlayerMoveRequest(SOCKET sock)
+{
+	//variables
+	char message_send[MAX_MESSAGE];
+	char user_pick_s[MAX_LINE];
+
+	sendthread_s packet;
+
+	int exit_code = 0, err = 0;
+
+	packet.sock = sock;
+	//ask the ser to pick his move
+	printf("Choose a move from the list: Rock, Paper, Scissors, Lizard or Spock:\n");
+	err = scanf_s("%s", user_pick_s, MAX_LINE);
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: Reading from the console\n");
+		return ERROR_CODE;
+	}
+	StringUpper(user_pick_s);
+
+
+	//choose the player pick
+	if (STRINGS_ARE_EQUAL(user_pick_s, "SPOCK"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n",CLIENT_PLAYER_MOVE, "SPOCK");
+	else if (STRINGS_ARE_EQUAL(user_pick_s, "ROCK"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", CLIENT_PLAYER_MOVE, "ROCK");
+	else if (STRINGS_ARE_EQUAL(user_pick_s, "PAPER"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", CLIENT_PLAYER_MOVE, "PAPER");
+	else if (STRINGS_ARE_EQUAL(user_pick_s, "LIZARD"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", CLIENT_PLAYER_MOVE, "LIZARD");
+	else if (STRINGS_ARE_EQUAL(user_pick_s, "SCISSORS"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", CLIENT_PLAYER_MOVE, "SCISSORS");
+	else
+	{
+		printf("Error: This Option is not avalibale or wrong\n");
+		return ERROR_CODE;
+	}
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: can't create the message for the client\n");
+		return ERROR_CODE;
+	}
+
+	/*---------------------------- send client main menu pick -----------------------------*/
+
+	packet.array_size = strlen(message_send);
+	packet.array_t = message_send;
+
+	//activate the send thread and get his exit code
+	exit_code = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code == ERROR_CODE)  return ERROR_CODE;
+	else if (exit_code != 0)  return CONNECTION_LOST;
+
+	return 0;
+}
+
+void StringUpper(char *a)
+{
+	int i = 0;
+	while (a[i] != '\0')
+	{
+		a[i] = (char)toupper(a[i]);
+		i++;
+	}
 }
 
 int GameResultDisplay()

@@ -20,7 +20,8 @@
 int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_adr, char *server_port);
 
 /*
-* MainMenuSelection gets the msin menu selection from the client and send to the server
+* MainMenuSelection gets the msin menu selection from the client and send to the server.
+* Input Arguments:
 *	sock - socket to be updated as a connected socket to the server.
 *	connect_again - a int that is 1 if the client want to connect again (if the connection failed).
 *	server_port - the server port as a string.
@@ -30,5 +31,22 @@ int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_
 *	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
 int MainMenuSelection(SOCKET sock, int *main_menu_selection);
+
+
+/*
+* PlayerMoveRequest gets the player move from the client and send it to the server
+* Input Arguments:
+*	sock - socket to be updated as a connected socket to the server.
+* Return :
+*	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
+*/
+int PlayerMoveRequest(SOCKET sock);
+
+/*
+* StirngUpper gets a string and change the characters in the string to upper case.
+* Input Arguments:
+*	a - the string we want to change.
+*/
+void StringUpper(char *a);
 
 #endif // __USERINTERFACEFUNCTIONS_H__

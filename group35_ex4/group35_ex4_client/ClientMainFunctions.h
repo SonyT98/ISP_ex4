@@ -35,8 +35,6 @@ int initializeConnection(SOCKET *sock, char *server_adr, char *server_port);
 * Request connection from the server and connect if allowed
 * Input Arguments:
 *	sock - socket to be updated as a connected socket to the server.
-*	server_port - the server port as a string.
-*	server_adr - the server address as a string.
 *	username - a string of the client username.
 * Return :
 *	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
@@ -46,14 +44,13 @@ int RequestConnection(SOCKET sock, char *username);
 /*
 * RecieveMessageFromServer receive the messages from the server and act accordingly
 *	sock - socket to be updated as a connected socket to the server.
-*	connect_again - a int that is 1 if the client want to connect again (if the connection failed).
-*	server_port - the server port as a string.
-*	server_adr - the server address as a string.
 *	main_menu_selection - the main menu selection of the message.
+*	menu_waittime - hold the wait time of the next message send in terms of 15 seconds
+*	(i.e. how many 15 seconds we have to wait in the next received for each message).
 * Return :
 *	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
-int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection);
+int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_waittime);
 
 
 #endif // __CLIENTMAINFUNCTIONS_H__

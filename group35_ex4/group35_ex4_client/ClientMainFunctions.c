@@ -31,13 +31,12 @@ int clientMain(char *username, char *server_adr, char *server_port)
 		//any other runs on the while, will have the socket intialize again
 		close_socket = 1;
 
-
 		// Initialize client socket
 		retVal = initializeConnection(&client_sock, server_adr, server_port);
 		// if the connection it self failed exit the client
 		if (retVal == ERROR_CODE)
 		{ ret = ERROR_CODE; goto client_cleanup_1; }
-		// connection failed and update the connection if necessery
+		// connection failed and update the connection if necessary
 		else if (retVal != 0)
 		{
 			retVal = ConnectionErrorMenu(&connect_again, retVal, server_adr, server_port);
@@ -51,7 +50,7 @@ int clientMain(char *username, char *server_adr, char *server_port)
 		// if the connection it self failed exit the client
 		if (retVal == ERROR_CODE)
 		{ ret = ERROR_CODE; goto client_cleanup_2; }
-		// connection failed and update the connection if necessery
+		// connection failed and update the connection if necessary
 		else if (retVal != 0)
 		{
 			retVal = ConnectionErrorMenu(&connect_again, retVal, server_adr, server_port);
@@ -60,6 +59,8 @@ int clientMain(char *username, char *server_adr, char *server_port)
 			continue;
 		}
 
+		//update the first wait time to 15 seconds
+		menu_waittime = 1;
 		while (TRUE)
 		{
 			retVal = ReceiveMessageFromServer(client_sock, &main_menu_selection,&menu_waittime);
@@ -68,7 +69,7 @@ int clientMain(char *username, char *server_adr, char *server_port)
 			{
 				ret = ERROR_CODE; goto client_cleanup_2;
 			}
-			// connection failed and update the connection if necessery
+			// connection failed and update the connection if necessary
 			else if (retVal != 0)
 			{
 				retVal = ConnectionErrorMenu(&connect_again, retVal, server_adr, server_port);
@@ -206,7 +207,6 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 {
 	//variables
 	char message_type[MAX_MESSAGE];
-	char message_send[MAX_MESSAGE];
 	char message_info[MAX_MESSAGE];
 
 	sendthread_s packet;
@@ -250,7 +250,8 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	//if the server ask the client to play his move
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_PLAYER_MOVE_REQUEST))
 	{
-		//MOVE REQUEST FUNCTION
+		err = PlayerMoveRequest(sock);
+		if (err != 0) { ret = err; goto packet_cleanup; }
 		if (*main_menu_selection == VERSUS_GAME_SELECTION)
 			//if we in versus, we need to wait 10 minutes for the other client
 			*menu_waittime = 40;

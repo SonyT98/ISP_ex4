@@ -132,7 +132,7 @@ int initializeConnection(SOCKET *sock, char *server_adr, char *server_port)
 		return CONNECTION_FAILED;
 	}
 
-	printf("Connected to server on <%s>:<%s>", server_adr, server_port);
+	printf("Connected to server on <%s>:<%s>\n", server_adr, server_port);
 
 	return 0;
 }
@@ -209,7 +209,7 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 {
 	//variables
 	char message_type[MAX_MESSAGE];
-	char message_info[MAX_MESSAGE];
+	char *message_info = NULL;
 
 	sendthread_s packet;
 
@@ -227,9 +227,18 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	if (exit_code == ERROR_CODE) { ret = ERROR_CODE;  goto return_ret; }
 	else if (exit_code != 0) { ret = CONNECTION_LOST;  goto return_ret; }
 
+	//allocating memory for the information message
+	message_info = (char*)malloc(packet.array_size);
+	if (message_info == NULL)
+	{
+		printf("Error: allocating memory for the recevied information");
+		ret = ERROR_CODE;
+		goto packet_cleanup;
+	}
+
 	//get the message type and the information
 	err = MessageCut(packet.array_t, packet.array_size, message_type, message_info);
-	if (err == ERROR_CODE) { ret = ERROR_CODE; goto packet_cleanup; }
+	if (err == ERROR_CODE) { ret = ERROR_CODE; goto info_cleanup; }
 
 	/*----------------------- search the right message type ----------------------------------*/
 
@@ -237,7 +246,7 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	if (STRINGS_ARE_EQUAL(message_type, SERVER_MAIN_MENU))
 	{
 		err = MainMenuSelection(sock, main_menu_selection);
-		if (err != 0) { ret = err; goto packet_cleanup; }
+		if (err != 0) { ret = err; goto info_cleanup; }
 		// according to the menu selection ,we will except to wait longer for the next receive
 		// (in example in the case of versus we want to wait 30 seconds instead of 15)
 		if (*main_menu_selection == VERSUS_GAME_SELECTION)
@@ -254,7 +263,7 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_PLAYER_MOVE_REQUEST))
 	{
 		err = PlayerMoveRequest(sock);
-		if (err != 0) { ret = err; goto packet_cleanup; }
+		if (err != 0) { ret = err; goto info_cleanup; }
 		if (*main_menu_selection == VERSUS_GAME_SELECTION)
 			//if we in versus, we need to wait 10 minutes for the other client
 			*menu_waittime = 40;
@@ -271,7 +280,7 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_GAME_OVER_MENU))
 	{
 		err = GameOverMenu(sock);
-		if (err != 0) { ret = err; goto packet_cleanup; }
+		if (err != 0) { ret = err; goto info_cleanup; }
 		if (*main_menu_selection == VERSUS_GAME_SELECTION)
 			//if we in versus, we need to wait 10 minutes for the other client
 			*menu_waittime = 2;
@@ -295,6 +304,8 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 		ret = ERROR_CODE;
 	}
 
+info_cleanup:
+	free(message_info);
 packet_cleanup:
 	free(packet.array_t);
 return_ret:

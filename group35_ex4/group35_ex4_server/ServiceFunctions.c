@@ -1011,7 +1011,7 @@ void RemovePlayerFromList(leaderboard_player **before_player, leaderboard_player
 		*first = (*first)->next;
 	}
 	//there is a player in the list
-	if (*player != NULL)
+	else if (*player != NULL)
 	{
 		(*before_player)->next = (*player)->next;
 		(*player)->next = NULL;
@@ -1068,14 +1068,14 @@ int SearchInList(leaderboard_player **current_player, char *username, int gamest
 	{
 		(*current_player)->won += 1;
 		if ((*current_player)->lost != 0)
-			(*current_player)->ratio = (*current_player)->won / (*current_player)->lost;
+			(*current_player)->ratio = (double)(*current_player)->won / (double)(*current_player)->lost;
 		else
 			(*current_player)->ratio = -1;
 	}
 	else if (gamestat == PLAYER_LOST)
 	{
 		(*current_player)->lost += 1;
-		(*current_player)->ratio = (*current_player)->won / (*current_player)->lost;
+		(*current_player)->ratio = (double)(*current_player)->won / (double)(*current_player)->lost;
 	}
 	goto return_ret;
 
@@ -1106,7 +1106,7 @@ int InsertPlayer(leaderboard_player** current_player, leaderboard_player **first
 		{
 			//if the current player is the first player in the list
 			if (search_p_before == NULL)
-				(*first_p) = current_player;
+				(*first_p) = *current_player;
 			else
 				search_p_before->next = *current_player;
 			(*current_player)->next = search_p;

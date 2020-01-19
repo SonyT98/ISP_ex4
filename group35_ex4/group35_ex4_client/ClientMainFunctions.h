@@ -26,24 +26,22 @@ int clientMain(char *username, char *server_adr,char *server_port);
 *	sock - pointer to asocket to be updated as a connected socket to the server.
 *	server_adr - the server address as a string.
 *	server_port - the server port as a string.
-*	connect_again - a int that is 1 if the client want to connect again (if the connection failed).
 * Return:
 *	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
-int initializeConnection(SOCKET *sock, char *server_adr, char *server_port, int *connect_again);
+int initializeConnection(SOCKET *sock, char *server_adr, char *server_port);
 
 /*
 * Request connection from the server and connect if allowed
 * Input Arguments:
 *	sock - socket to be updated as a connected socket to the server.
-*	connect_again - a int that is 1 if the client want to connect again (if the connection failed).
 *	server_port - the server port as a string.
 *	server_adr - the server address as a string.
 *	username - a string of the client username.
 * Return :
 *	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
-int RequestConnection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, char *username);
+int RequestConnection(SOCKET sock, char *username);
 
 /*
 * RecieveMessageFromServer receive the messages from the server and act accordingly
@@ -55,7 +53,7 @@ int RequestConnection(SOCKET sock, int *connect_again, char *server_adr, char *s
 * Return :
 *	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
-int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *main_menu_selection);
+int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection);
 
 
 #endif // __CLIENTMAINFUNCTIONS_H__

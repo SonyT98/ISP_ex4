@@ -176,48 +176,57 @@ return_ret:
 }
 
 
-int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player)
+int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player, char *username)
 {
 	int player_move = 0, cpu_move = 0;
-	int err = 0, ret = 0;
-
+	int err = 0, ret = 0, replay = 1;
+	
 	time_t t;
-
-	err = GetMoveFromClient(sock, player_move_s, &player_move);
-	if (err != 0) { ret = err;  goto return_ret; }
-
-	/*------------------------------- Play CPU match ---------------------------------*/
 	/* Intializes random number generator */
 	srand((unsigned)time(&t));
 
-	cpu_move = rand() % 5 + 1;
-	switch (cpu_move)
-	{
-	case ROCK:
-		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "ROCK");
-		break;
-	case PAPER:
-		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "PAPER");
-		break;
-	case SCISSORS:
-		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "SCISSORS");
-		break;
-	case LIZARD:
-		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "LIZARD");
-		break;
-	case SPOCK:
-		err = strcpy_s(cpu_move_s, MAX_MESSAGE, "SPOCK");
-		break;
-	}
-	if (err != 0)
-	{
-		printf("Error: strcpy failed\n");
-		ret = ERROR_CODE;
-		goto return_ret;
-	}
 
-	*winning_player = PlayMatch(player_move, cpu_move);
+	while (replay == 1)
+	{
+		err = GetMoveFromClient(sock, player_move_s, &player_move);
+		if (err != 0) { ret = err;  goto return_ret; }
 
+		/*------------------------------- Play CPU match ---------------------------------*/
+		cpu_move = rand() % 5 + 1;
+		switch (cpu_move)
+		{
+		case ROCK:
+			err = strcpy_s(cpu_move_s, MAX_MESSAGE, "ROCK");
+			break;
+		case PAPER:
+			err = strcpy_s(cpu_move_s, MAX_MESSAGE, "PAPER");
+			break;
+		case SCISSORS:
+			err = strcpy_s(cpu_move_s, MAX_MESSAGE, "SCISSORS");
+			break;
+		case LIZARD:
+			err = strcpy_s(cpu_move_s, MAX_MESSAGE, "LIZARD");
+			break;
+		case SPOCK:
+			err = strcpy_s(cpu_move_s, MAX_MESSAGE, "SPOCK");
+			break;
+		}
+		if (err != 0)
+		{
+			printf("Error: strcpy failed\n");
+			ret = ERROR_CODE;
+			goto return_ret;
+		}
+
+		*winning_player = PlayMatch(player_move, cpu_move);
+
+		err = EndGameStatus(sock, username, "Server", player_move, cpu_move, winning_player, &replay);
+		if (err != 0)
+		{
+			ret = err;
+			goto return_ret;
+		}
+	}
 
 return_ret:
 	return ret;
@@ -232,6 +241,7 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 	char message_send[MAX_MESSAGE];
 	
 	int retVal = 0, err = 0, exit_code =0, flag = 0;
+	int replay = 1, replay_choice = 0;
 
 	int player_move, wait_code;
 	int opponent_mov = -1;
@@ -269,8 +279,6 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 	{
 
 		/*---------------------------- send SERVER_INVITE -----------------------------*/
-
-
 		wait_code = WaitForSingleObject(username_mutex, INFINITE);
 		if (WAIT_OBJECT_0 != wait_code)
 		{
@@ -280,7 +288,7 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 
 		/* Critical section */
 
-		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", SERVER_INVITE);
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s:%s\n", SERVER_INVITE, usernames[!index]);
 
 		retVal = ReleaseMutex(username_mutex);
 		if (FALSE == retVal)
@@ -303,104 +311,109 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 		//if the thread setup failed or the thread function itself failed
 		if (exit_code != 0)  return exit_code;
 
-
-
-
-		flag = MakeSureFileExist();
-		if (flag == ERROR_CODE) return ERROR_CODE;
-
-		// the file was already open
-		if (flag == 1) 
+		while (replay == 1)
 		{
-			/* Ask client for his move */
-			err = GetMoveFromClient(sock, player_move_s, &player_move);
-			if (err != 0) return err;
-			
-			/* Write move to GameSession.txt */
-			retVal = ReadOrWriteToGameSassionFile(player_move_s, &player_move, WRITE_TO_GAMESESSION);
+			flag = MakeSureFileExist();
+			if (flag == ERROR_CODE) return ERROR_CODE;
 
-			/* Signal opponent thread */
-			retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
-			if (FALSE == retVal)
+			// the file was already open
+			if (flag == 1)
 			{
-				printf("Error when releasing find_opp_sem\n");
+				/* Ask client for his move */
+				err = GetMoveFromClient(sock, player_move_s, &player_move);
+				if (err != 0) return err;
 
-				return ERROR_CODE;
+				/* Write move to GameSession.txt */
+				retVal = ReadOrWriteToGameSassionFile(player_move_s, &player_move, WRITE_TO_GAMESESSION);
+
+				/* Signal opponent thread */
+				retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
+				if (FALSE == retVal)
+				{
+					printf("Error when releasing find_opp_sem\n");
+
+					return ERROR_CODE;
+				}
+
+				/* Wait opponent thread */
+				wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
+				if (WAIT_OBJECT_0 != wait_code)
+				{
+					printf("Error when waiting for com_sem[0]\n");
+					return ERROR_CODE;
+				}
+
+				/* Read Opponent Move */
+				retVal = ReadOrWriteToGameSassionFile(opponent_move_s, &opponent_mov, READ_FROM_GAMESESSION);
+
+				/* Signal opponent thread */
+				retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
+				if (FALSE == retVal)
+				{
+					printf("Error when releasing find_opp_sem\n");
+
+					return ERROR_CODE;
+				}
+
+			}
+			// i opened the file
+			else
+			{
+
+				/* Ask client for his move */
+				err = GetMoveFromClient(sock, player_move_s, &player_move);
+				if (err != 0) return err;
+
+				/* Wait opponent thread */
+				wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
+				if (WAIT_OBJECT_0 != wait_code)
+				{
+					printf("Error when waiting for com_sem[0]\n");
+					return ERROR_CODE;
+				}
+
+				/* Read Opponent Move */
+				retVal = ReadOrWriteToGameSassionFile(opponent_move_s, &opponent_mov, READ_FROM_GAMESESSION);
+
+				/* Write move to GameSession.txt */
+				retVal = ReadOrWriteToGameSassionFile(player_move_s, &player_move, WRITE_TO_GAMESESSION);
+
+				/* Signal opponent thread */
+				retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
+				if (FALSE == retVal)
+				{
+					printf("Error when releasing find_opp_sem\n");
+
+					return ERROR_CODE;
+				}
+
+				/* Wait opponent thread */
+				wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
+				if (WAIT_OBJECT_0 != wait_code)
+				{
+					printf("Error when waiting for com_sem[0]\n");
+					return ERROR_CODE;
+				}
+
+				/* Remove file */
+				if (remove("GameSession.txt") == -1)
+				{
+					printf("Error in deleting GameSession.txt file");
+					return ERROR_CODE;
+				}
+
 			}
 
-			/* Wait opponent thread */
-			wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
-			if (WAIT_OBJECT_0 != wait_code)
-			{
-				printf("Error when waiting for com_sem[0]\n");
+			/* Calculate result */
+			*winning_player = PlayMatch(player_move, opponent_mov);
+			err = EndGameStatus(sock, usernames[index], usernames[!index], player_move_s, opp_move_s, *winning_player, &replay_choice);
+			if (err != 0)
 				return ERROR_CODE;
-			}
 
-			/* Read Opponent Move */
-			retVal = ReadOrWriteToGameSassionFile(opponent_move_s, &opponent_mov, READ_FROM_GAMESESSION);
-			
-			/* Signal opponent thread */
-			retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
-			if (FALSE == retVal)
-			{
-				printf("Error when releasing find_opp_sem\n");
-
+			replay = VersusReplayOptionCheck(replay_choice,index);
+			if (replay == ERROR_CODE)
 				return ERROR_CODE;
-			}
-
 		}
-
-		// i opened the file
-		else 
-		{
-
-			/* Ask client for his move */
-			err = GetMoveFromClient(sock, player_move_s, &player_move);
-			if (err != 0) return err;
-
-			/* Wait opponent thread */
-			wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
-			if (WAIT_OBJECT_0 != wait_code)
-			{
-				printf("Error when waiting for com_sem[0]\n");
-				return ERROR_CODE;
-			}
-
-			/* Read Opponent Move */
-			retVal = ReadOrWriteToGameSassionFile(opponent_move_s, &opponent_mov, READ_FROM_GAMESESSION);
-
-			/* Write move to GameSession.txt */
-			retVal = ReadOrWriteToGameSassionFile(player_move_s, &player_move, WRITE_TO_GAMESESSION);
-
-			/* Signal opponent thread */
-			retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
-			if (FALSE == retVal)
-			{
-				printf("Error when releasing find_opp_sem\n");
-
-				return ERROR_CODE;
-			}
-
-			/* Wait opponent thread */
-			wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
-			if (WAIT_OBJECT_0 != wait_code)
-			{
-				printf("Error when waiting for com_sem[0]\n");
-				return ERROR_CODE;
-			}
-
-			/* Remove file */
-			if (remove("GameSession.txt") == -1)
-			{
-				printf("Error in deleting GameSession.txt file");
-				return ERROR_CODE;
-			}
-			
-		}
-
-		/* Calculate result */
-		*winning_player = PlayMatch(player_move, opponent_mov);
-
 		return 0;
 	}
 }
@@ -633,7 +646,7 @@ int VersusReplayOptionCheck(int replay_choice,int index)
 		//activate the send thread and get his exit code
 		err = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
 		//if the thread setup failed or the thread function itself failed
-		if (err != 0)  return err;
+		if (err != 0)  return ERROR_CODE;
 		
 		return 0;
 	}

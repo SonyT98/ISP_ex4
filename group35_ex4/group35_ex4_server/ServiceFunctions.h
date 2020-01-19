@@ -39,10 +39,11 @@ int SelectFromMenu(SOCKET sock, int *menu_select);
 *	player_move_s - the string that include the player move.
 *	cpu_move_s - the string that include the cpu move.
 *	winning_player - the winning player: 1 is the player, 2 is the cpu, 0 is a tie.
+*	username - a string of the username of the client.
 * Output:
 *	return -1 if failed, otherwise return the exit code of the thread recv and send.
 */
-int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player);
+int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player,char *username);
 
 /*
 * VersusGame set the game of the client against the versus mode.

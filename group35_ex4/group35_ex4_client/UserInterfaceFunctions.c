@@ -49,7 +49,7 @@ int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_
 	return connection_error_type;
 }
 
-int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *main_menu_selection)
+int MainMenuSelection(SOCKET sock, int *main_menu_selection)
 {
 	//variables
 	char message_type[MAX_MESSAGE];
@@ -78,22 +78,22 @@ int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *s
 	if (STRINGS_ARE_EQUAL(user_pick_s, "1"))
 	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_VERSUS);
-		*main_menu_selection = 1;
+		*main_menu_selection = VERSUS_GAME_SELECTION;
 	}
 	else if (STRINGS_ARE_EQUAL(user_pick_s, "2"))
 	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_CPU);
-		*main_menu_selection = 2;
+		*main_menu_selection = CPU_GAME_SELECTION;
 	}
 	else if (STRINGS_ARE_EQUAL(user_pick_s, "3"))
 	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_LEADERBOARD);
-		*main_menu_selection = 3;
+		*main_menu_selection = LEADERBOARD_SELECTION;
 	}
 	else if (STRINGS_ARE_EQUAL(user_pick_s, "4"))
 	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_DISCONNECT);
-		*main_menu_selection = 4;
+		*main_menu_selection = DISCONNECT_SELECTION;
 	}
 	else
 	{
@@ -114,9 +114,8 @@ int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *s
 	//activate the send thread and get his exit code
 	exit_code = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
-	if (exit_code == ERROR_CODE) { return ERROR_CODE; }
-	else if (exit_code != 0)
-		return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+	if (exit_code == ERROR_CODE)  return ERROR_CODE; 
+	else if (exit_code != 0)  return CONNECTION_LOST; 
 
 	return 0;
 }

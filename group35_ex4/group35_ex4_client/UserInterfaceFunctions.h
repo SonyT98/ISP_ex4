@@ -29,6 +29,6 @@ int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_
 * Return :
 *	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
-int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *main_menu_selection);
+int MainMenuSelection(SOCKET sock, int *main_menu_selection);
 
 #endif // __USERINTERFACEFUNCTIONS_H__

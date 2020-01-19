@@ -9,12 +9,7 @@ int clientMain(char *username, char *server_adr, char *server_port)
 	int connect_again = 1;
 	int replay = 1;
 	int close_socket = 0;
-	int main_menu_selection = 0;
-
-	sendthread_s packet;
-
-	char message_type[MAX_MESSAGE];
-	char message_info[MAX_MESSAGE];
+	int main_menu_selection = 0, menu_waittime = 1;
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -38,31 +33,54 @@ int clientMain(char *username, char *server_adr, char *server_port)
 
 
 		// Initialize client socket
-		retVal = initializeConnection(&client_sock, server_adr, server_port, &connect_again);
+		retVal = initializeConnection(&client_sock, server_adr, server_port);
 		// if the connection it self failed exit the client
 		if (retVal == ERROR_CODE)
 		{ ret = ERROR_CODE; goto client_cleanup_1; }
 		// connection failed and update the connection if necessery
 		else if (retVal != 0)
+		{
+			retVal = ConnectionErrorMenu(&connect_again, retVal, server_adr, server_port);
+			if (retVal == ERROR_CODE)
+				break;
 			continue;
+		}
 
 		//request connection from the server
-		retVal = RequestConnection(client_sock, &connect_again, server_adr, server_port,username);
+		retVal = RequestConnection(client_sock,username);
 		// if the connection it self failed exit the client
 		if (retVal == ERROR_CODE)
 		{ ret = ERROR_CODE; goto client_cleanup_2; }
 		// connection failed and update the connection if necessery
 		else if (retVal != 0)
-			continue; 
-
-
-		packet.sock = client_sock;
+		{
+			retVal = ConnectionErrorMenu(&connect_again, retVal, server_adr, server_port);
+			if (retVal == ERROR_CODE)
+				break;
+			continue;
+		}
 
 		while (TRUE)
 		{
-
-
-
+			retVal = ReceiveMessageFromServer(client_sock, &main_menu_selection,&menu_waittime);
+			// if the connection it self failed exit the client
+			if (retVal == ERROR_CODE)
+			{
+				ret = ERROR_CODE; goto client_cleanup_2;
+			}
+			// connection failed and update the connection if necessery
+			else if (retVal != 0)
+			{
+				retVal = ConnectionErrorMenu(&connect_again, retVal, server_adr, server_port);
+				if (retVal == ERROR_CODE)
+					goto client_cleanup_2;
+				break;
+			}
+			if (main_menu_selection == DISCONNECT_SELECTION)
+			{
+				connect_again = 0;
+				break;
+			}
 		}
 	}
 	
@@ -73,7 +91,7 @@ client_cleanup_1:
 	return ret;
 }
 
-int initializeConnection(SOCKET *sock, char *server_adr, char *server_port, int *connect_again)
+int initializeConnection(SOCKET *sock, char *server_adr, char *server_port)
 {
 
 	SOCKADDR_IN clientService;
@@ -110,17 +128,13 @@ int initializeConnection(SOCKET *sock, char *server_adr, char *server_port, int 
 	if (connect(*sock, (SOCKADDR*)&clientService, sizeof(clientService)) == SOCKET_ERROR) 
 	{
 		// the connection lost, and we need to get the user pick
-		ret = ConnectionErrorMenu(connect_again, CONNECTION_FAILED, server_adr, server_port);
-		if (ret == ERROR_CODE)
-			closesocket(*sock);
-		return ret;
+		return CONNECTION_FAILED;
 	}
 
 	return 0;
-
 }
 
-int RequestConnection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, char *username)
+int RequestConnection(SOCKET sock, char *username)
 {
 	//variables
 	char message_type[MAX_MESSAGE];
@@ -149,8 +163,7 @@ int RequestConnection(SOCKET sock, int *connect_again, char *server_adr, char *s
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code == ERROR_CODE) { ret = ERROR_CODE;  goto return_ret; }
 	//if the thread is on timeout or transsmition failed
-	else if (exit_code != 0)
-		return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+	else if (exit_code != 0) { ret = CONNECTION_LOST;  goto return_ret; }
 
 
 	/*----------------------------recv SERVER_APPROVED/SERVER_DENIED-----------------------------*/
@@ -161,8 +174,8 @@ int RequestConnection(SOCKET sock, int *connect_again, char *server_adr, char *s
 	exit_code = ActivateThread((void*)&packet, 0, SENDRECV_WAITTIME);
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code == ERROR_CODE) { ret = ERROR_CODE;  goto return_ret; }
-	else if (exit_code != 0)
-		return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+	else if (exit_code != 0) { ret = CONNECTION_LOST;  goto return_ret; }
+		
 
 	//get the message type and the information
 	err = MessageCut(packet.array_t, packet.array_size, message_type, message_info);
@@ -171,7 +184,7 @@ int RequestConnection(SOCKET sock, int *connect_again, char *server_adr, char *s
 	//if server denied, send to connection error menu
 	if (STRINGS_ARE_EQUAL(message_type, SERVER_DENIED))
 	{
-		ret = ConnectionErrorMenu(connect_again, CONNECTION_DENIED, server_adr, server_port);
+		ret = CONNECTION_DENIED;
 		goto packet_cleanup;
 	}
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_APPROVED))
@@ -189,7 +202,7 @@ return_ret:
 	return ret;
 }
 
-int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *main_menu_selection)
+int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_waittime)
 {
 	//variables
 	char message_type[MAX_MESSAGE];
@@ -198,7 +211,8 @@ int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, 
 
 	sendthread_s packet;
 
-	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
+	int size_arr = 0, ret = 0, exit_code = 0, err = 0, wait_mul = 1;
+	int client_choice = 0;
 
 	packet.sock = sock;
 
@@ -207,11 +221,10 @@ int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, 
 	packet.array_size = 0;
 
 	//activate the recv thread and get his exit code
-	exit_code = ActivateThread((void*)&packet, 0, SENDRECV_WAITTIME);
+	exit_code = ActivateThread((void*)&packet, 0, SENDRECV_WAITTIME*(*menu_waittime));
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code == ERROR_CODE) { ret = ERROR_CODE;  goto return_ret; }
-	else if (exit_code != 0)
-		return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+	else if (exit_code != 0) { ret = CONNECTION_LOST;  goto return_ret; }
 
 	//get the message type and the information
 	err = MessageCut(packet.array_t, packet.array_size, message_type, message_info);
@@ -222,18 +235,54 @@ int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, 
 	//the server send main menu selection
 	if (STRINGS_ARE_EQUAL(message_type, SERVER_MAIN_MENU))
 	{
-		err = MainMenuSelection(sock, connect_again, server_adr, server_port, main_menu_selection);
-		if (err == ERROR_CODE) { ret = ERROR_CODE; goto packet_cleanup; }
-		else if (err != 0)
-			return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);
+		err = MainMenuSelection(sock, main_menu_selection);
+		if (err != 0) { ret = err; goto packet_cleanup; }
+		// according to the menu selection ,we will except to wait longer for the next receive
+		// (in example in the case of versus we want to wait 30 seconds instead of 15)
+		if (*main_menu_selection == VERSUS_GAME_SELECTION)
+			*menu_waittime = 2;
+		else
+			*menu_waittime = 1;
 	}
 	// the server inform the client that a match going to start
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_INVITE))
-		goto packet_cleanup;
+		*menu_waittime = 1;
 	//if the server ask the client to play his move
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_PLAYER_MOVE_REQUEST))
 	{
-
+		//MOVE REQUEST FUNCTION
+		if (*main_menu_selection == VERSUS_GAME_SELECTION)
+			//if we in versus, we need to wait 10 minutes for the other client
+			*menu_waittime = 40;
+		else
+			*menu_waittime = 1;
+	}
+	//the server send game result
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_GAME_RESULTS))
+	{
+		//SERVER GAME RESULT
+		*menu_waittime = 1;
+	}
+	//server send the game over menu
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_GAME_OVER_MENU))
+	{
+		//SERVER GAME OVER MENU
+	}
+	//server send the server opponent quit
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_GAME_OVER_MENU))
+	{
+		printf("<%s> has left the game!\n", message_info);
+		*menu_waittime = 1;
+	}
+	//the server send the leader board
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_LEADERBOARD))
+		*menu_waittime = 1;
+	else if (STRINGS_ARE_EQUAL(message_type, SERVER_LEADERBOARD_MENU))
+		*menu_waittime = 1;
+	else
+	{
+		printf("Error: The message received did not match the protocol!\n");
+		ret = ERROR_CODE;
 	}
 
 packet_cleanup:

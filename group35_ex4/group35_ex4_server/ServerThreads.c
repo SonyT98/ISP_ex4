@@ -55,58 +55,47 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 	int ret_val = 0;
 	//get the client username and accept him
 	err = ClientUsername(arg->client_socket, username);
-	if (err == ERROR_CODE) return ERROR_CODE;
+	if (err != 0)
+	{
+		closesocket(arg->client_socket);
+		return ERROR_CODE;
+	}
 
 	while (TRUE)
 	{
 
 		//get the main menu selection from the client
 		err = SelectFromMenu(arg->client_socket, &menu_selection);
-		if (err == ERROR_CODE) return ERROR_CODE;
-
-		while(replay == 1)
-		{ 
-			switch (menu_selection)
+		if (err != 0)
+		{
+			closesocket(arg->client_socket);
+			return ERROR_CODE;
+		}
+		switch (menu_selection)
+		{
+		case 1: // Play with the server
+			err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player);
+			if (err != 0)
 			{
-			case 1: // Play with the server
-				err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player);
-				{
-					closesocket(arg->client_socket);
-					return ERROR_CODE;
-				}
-				err = EndGameStatus(arg->client_socket, username, "Server", player_move, cpu_move, winning_player, &replay);
-				{
-					closesocket(arg->client_socket);
-					return ERROR_CODE;
-				}
-				break;
-			case 2: // Play versus another player
-
-				err = VersusGame(arg->client_socket,arg->index, player_move, cpu_move, &winning_player);
-				{
-					closesocket(arg->client_socket);
-					return ERROR_CODE;
-				}
-				err = EndGameStatus(arg->client_socket, username, usernames[!arg->index], player_move, cpu_move, winning_player, &replay_choice);
-				{
-					closesocket(arg->client_socket);
-					return ERROR_CODE;
-				}
-				replay = VersusReplayOptionCheck(replay_choice,arg->index);
-				if (replay == ERROR_CODE)
-				{
-					closesocket(arg->client_socket);
-					return ERROR_CODE;
-				}
-				break;
-			case 3: // Leaderboard
-				replay = 0;
-				break;
-			case 4:// Exit
 				closesocket(arg->client_socket);
-				return 0;
-
+				return ERROR_CODE;
 			}
+			break;
+		case 2: // Play versus another player
+			err = VersusGame(arg->client_socket,arg->index, player_move, cpu_move, &winning_player);
+			if (err != 0)
+			{
+				closesocket(arg->client_socket);
+				return ERROR_CODE;
+			}
+			break;
+		case 3: // Leaderboard
+			replay = 1;
+			break;
+		case 4:// Exit
+			closesocket(arg->client_socket);
+			return 0;
+
 		}
 	}
 }

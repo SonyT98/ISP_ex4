@@ -25,10 +25,10 @@ int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_
 *	connect_again - a int that is 1 if the client want to connect again (if the connection failed).
 *	server_port - the server port as a string.
 *	server_adr - the server address as a string.
-*	client_disconnected - will update to 1 if the client want to disconnect.
+*	main_menu_selection - the main menu selection of the message.
 * Return :
 *	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
 */
-int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *client_disconnected);
+int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *main_menu_selection);
 
 #endif // __USERINTERFACEFUNCTIONS_H__

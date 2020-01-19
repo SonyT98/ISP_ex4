@@ -9,6 +9,7 @@ int clientMain(char *username, char *server_adr, char *server_port)
 	int connect_again = 1;
 	int replay = 1;
 	int close_socket = 0;
+	int main_menu_selection = 0;
 
 	// Initialize Winsock.
 	WSADATA wsaData;
@@ -178,7 +179,7 @@ return_ret:
 	return ret;
 }
 
-int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *client_disconnect)
+int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *main_menu_selection)
 {
 	//variables
 	char message_type[MAX_MESSAGE];
@@ -206,10 +207,12 @@ int ReceiveMessageFromServer(SOCKET sock, int *connect_again, char *server_adr, 
 	err = MessageCut(packet.array_t, packet.array_size, message_type, message_info);
 	if (err == ERROR_CODE) { ret = ERROR_CODE; goto packet_cleanup; }
 
+	/*----------------------- search the right message type ----------------------------------*/
+
 	//the server send main menu selection
 	if (STRINGS_ARE_EQUAL(message_type, SERVER_MAIN_MENU))
 	{
-		err = MainMenuSelection(sock, connect_again, server_adr, server_port, client_disconnect);
+		err = MainMenuSelection(sock, connect_again, server_adr, server_port, main_menu_selection);
 		if (err == ERROR_CODE) { ret = ERROR_CODE; goto packet_cleanup; }
 		else if (err != 0)
 			return ConnectionErrorMenu(connect_again, CONNECTION_LOST, server_adr, server_port);

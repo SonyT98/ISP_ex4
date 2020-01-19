@@ -47,7 +47,7 @@ int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_
 	return connection_error_type;
 }
 
-int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *client_disconnected)
+int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *server_port, int *main_menu_selection)
 {
 	//variables
 	char message_type[MAX_MESSAGE];
@@ -73,15 +73,24 @@ int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *s
 
 	//choose the main menu option
 	if (STRINGS_ARE_EQUAL(user_pick_s, "1"))
+	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_VERSUS);
+		*main_menu_selection = 1;
+	}
 	else if (STRINGS_ARE_EQUAL(user_pick_s, "2"))
+	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_CPU);
+		*main_menu_selection = 2;
+	}
 	else if (STRINGS_ARE_EQUAL(user_pick_s, "3"))
+	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_LEADERBOARD);
+		*main_menu_selection = 3;
+	}
 	else if (STRINGS_ARE_EQUAL(user_pick_s, "4"))
 	{
 		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_DISCONNECT);
-		*client_disconnected = 1;
+		*main_menu_selection = 4;
 	}
 	else
 	{

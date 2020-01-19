@@ -13,7 +13,8 @@
 * Return :
 *	return ERROR_CODE if error accrued, and 0 else
 */
-int serverMain();
+int serverMain(int argc, char *argv[]);
+
 
 /*
 * This function search for an open slot in the global thread array
@@ -31,7 +32,7 @@ static int FindFirstUnusedThreadSlot();
 *	return ERROR_CODE if error accrued
 */
 
-int initializeListeningSocket(AcceptSocketParams *acceptParams);
+int initializeListeningSocket(AcceptSocketParams *acceptParams, char* server_port);
 
 /*
 * This function initialize all global semaphores and mutexes.

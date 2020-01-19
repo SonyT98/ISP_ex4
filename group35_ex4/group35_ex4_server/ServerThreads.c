@@ -12,8 +12,11 @@ DWORD WINAPI AcceptClientThread(LPSTR lpParam)
 	param->AcceptSocket = accept(param->mainSocket , NULL, NULL);
 	if (param->AcceptSocket == INVALID_SOCKET)
 	{
-		printf("Accepting connection with client failed, error %ld\n", WSAGetLastError());
-		return ERROR_CODE;
+		if (WSAGetLastError() != 10004)
+		{
+			printf("Accepting connection with client failed, error %ld\n", WSAGetLastError());
+			return ERROR_CODE;
+		}
 	}
 	return 1;
 }

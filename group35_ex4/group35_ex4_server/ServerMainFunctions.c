@@ -2,7 +2,7 @@
 #include "ServerMainFunctions.h"
 
 
-int serverMain()
+int serverMain(int argc, char *argv[])
 {
 
 	int Ind;
@@ -21,6 +21,14 @@ int serverMain()
 
 	sendthread_s recive;
 
+	if (argc != 2)
+	{
+		printf("Error in command arguments: arguments must contain the server port number \n\n");
+		return ERROR_CODE;
+	
+	}
+
+
 	// Initialize Winsock.
 	WSADATA wsaData;
 	int StartupRes = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -34,7 +42,7 @@ int serverMain()
 	/* The WinSock DLL is acceptable. Proceed. */
 
 	// Initialize the listening socket 
-	retVal = initializeListeningSocket(&acceptParam);
+	retVal = initializeListeningSocket(&acceptParam,argv[1]);
 	if (retVal == ERROR_CODE)
 	{
 		ret = ERROR_CODE;
@@ -126,11 +134,11 @@ int serverMain()
 	/* EXIT procedure */
 server_cleanup_6:
 
-	CloseHandle(ThreadHandles[0]);
-	CloseHandle(ThreadHandles[1]);
-	closesocket((ThreadInputs[0]).client_socket);
-	closesocket((ThreadInputs[1]).client_socket);
-	closesocket(closesocket((ThreadInputs[1]).client_socket));
+	retVal = CloseHandle(ThreadHandles[0]);
+	retVal = CloseHandle(ThreadHandles[1]);
+	retVal = closesocket((ThreadInputs[0]).client_socket);
+	retVal = closesocket((ThreadInputs[1]).client_socket);
+	retVal = closesocket(closesocket((ThreadInputs[1]).client_socket));
 
 
 
@@ -152,7 +160,7 @@ server_cleanup_1: //Close WINSOCK
 }
 
 
-int initializeListeningSocket(AcceptSocketParams *acceptParams)
+int initializeListeningSocket(AcceptSocketParams *acceptParams,char* server_port)
 {
 	int bindRes, ListenRes;
 	unsigned long Address;
@@ -183,7 +191,7 @@ int initializeListeningSocket(AcceptSocketParams *acceptParams)
 	// set the sockadder struck fields
 	service.sin_family = AF_INET;
 	service.sin_addr.s_addr = Address;
-	service.sin_port = htons(SERVER_PORT); //The htons function converts a u_short from host to TCP/IP network byte order 
+	service.sin_port = htons(atoi(server_port)); //The htons function converts a u_short from host to TCP/IP network byte order 
 									   //( which is big-endian ).
 	/*
 		The three lines following the declaration of sockaddr_in service are used to set up
@@ -453,6 +461,7 @@ void ReplaceCommaStr(char *line_str)
 		}
 	}
 }
+
 
 int sendServerDenied(SOCKET acceptSocket)
 {

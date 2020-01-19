@@ -31,15 +31,17 @@ int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_
 		{
 			*user_pick = 1;
 			wrong_selection = 0;
+			break;
 		}
 		else if (STRINGS_ARE_EQUAL(user_pick_s, "2"))
 		{
 			*user_pick = 2;
 			wrong_selection = 0;
+			break;
 		}
 		else
 		{
-			printf("This Option is not avalibale or wrong.\n Please select again.\n");
+			printf("This Option is not avalibale or wrong.\nPlease select again.\n");
 			wrong_selection = 1;
 		}
 	}
@@ -57,13 +59,14 @@ int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *s
 
 	sendthread_s packet;
 
+
 	int size_arr = 0, ret = 0, exit_code = 0, err = 0;
 
 	packet.sock = sock;
 
 	//menu selection for the user
 	printf("Choose what to do next:\n");
-	printf("1. Play against another client\n2. Play against the server\n3. View the leaderboard\n4. Quit");
+	printf("1. Play against another client\n2. Play against the server\n3. View the leaderboard\n4. Quit\n");
 	err = scanf_s("%s", user_pick_s, MAX_LINE);
 	if (err == 0 || err == EOF)
 	{
@@ -108,3 +111,5 @@ int MainMenuSelection(SOCKET sock, int *connect_again, char *server_adr, char *s
 
 	return 0;
 }
+
+int GameResultDisplay()

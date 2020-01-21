@@ -367,28 +367,40 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 
 				/* Ask client for his move */
 				err = GetMoveFromClient(sock, player_move_s, &player_move);
-				if (err != 0) return err;
+				if (err != 0)
+				{
+					remove("GameSession.txt");
+					return err;
+				}
 
 				/* Wait opponent thread */
 				wait_code = WaitForSingleObject(com_sem[flag], INFINITE);
 				if (WAIT_OBJECT_0 != wait_code)
 				{
 					printf("Error when waiting for com_sem[0]\n");
+					remove("GameSession.txt");
 					return ERROR_CODE;
 				}
 
 				/* Read Opponent Move */
-				retVal = ReadOrWriteToGameSassionFile(opponent_move_s, &opponent_mov, READ_FROM_GAMESESSION);
-
-				/* Write move to GameSession.txt */
-				retVal = ReadOrWriteToGameSassionFile(player_move_s, &player_move, WRITE_TO_GAMESESSION);
-
+				err = ReadOrWriteToGameSassionFile(opponent_move_s, &opponent_mov, READ_FROM_GAMESESSION);
+				if (err != ERROR_CODE)
+				{
+					/* Write move to GameSession.txt */
+					err = ReadOrWriteToGameSassionFile(player_move_s, &player_move, WRITE_TO_GAMESESSION);
+				}
 				/* Signal opponent thread */
 				retVal = ReleaseSemaphore(com_sem[!flag], 1, NULL);
 				if (FALSE == retVal)
 				{
 					printf("Error when releasing find_opp_sem\n");
-
+					remove("GameSession.txt");
+					return ERROR_CODE;
+				}
+				//if the write/read to gamesession file failed
+				if (err == ERROR_CODE)
+				{
+					remove("GameSession.txt");
 					return ERROR_CODE;
 				}
 
@@ -397,6 +409,7 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 				if (WAIT_OBJECT_0 != wait_code)
 				{
 					printf("Error when waiting for com_sem[0]\n");
+					remove("GameSession.txt");
 					return ERROR_CODE;
 				}
 
@@ -414,8 +427,6 @@ int VersusGame(SOCKET sock,int index, char* player_move_s, char* opp_move_s, int
 			err = EndGameStatus(sock, usernames[index], usernames[!index], player_move_s, opponent_move_s, *winning_player, &replay_choice);
 			if (err != 0)
 				return ERROR_CODE;
-
-			/* Update leader board */
 
 
 			/* Check if the opponent wants to play again and update replay */
@@ -705,6 +716,11 @@ int ReadOrWriteToGameSassionFile(char* player_move_s, int* player_move_i, int re
 			ret = ERROR_CODE;
 		}
 		retVal = fscanf_s(fp, "%[^,],%d", player_move_s,10, player_move_i);
+		if (retVal == 0 || retVal == EOF)
+		{
+			printf("Error while trying to read file\n");
+			ret = ERROR_CODE;
+		}
 		fclose(fp);
 	
 	}
@@ -1360,8 +1376,7 @@ int SendLeaderboardMessage(SOCKET sock, char **info, int info_length, char **sav
 	//if the thread setup failed or the thread function itself failed
 	if (exit_code != 0) { ret = exit_code;  goto free_message_send; }
 
-	/*------------------------- send SERVER_LEADERBOARD_MENU ----------------------
-------------*/
+	/*------------------------- send SERVER_LEADERBOARD_MENU ----------------------------------*/
 	err = sprintf_s(message_send, MAX_MESSAGE + info_length, "%s\n", SERVER_LEADERBOARD_MENU);
 	if (err == 0 || err == EOF)
 	{

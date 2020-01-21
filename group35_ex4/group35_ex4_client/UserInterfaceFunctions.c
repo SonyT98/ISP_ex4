@@ -46,6 +46,7 @@ int ConnectionErrorMenu(int *user_pick, int connection_error_type, char *server_
 		}
 	}
 
+	printf(DISPLAY_BARRIER);
 	return connection_error_type;
 }
 
@@ -102,7 +103,7 @@ int MainMenuSelection(SOCKET sock, int *main_menu_selection)
 		printf("Error: can't create the message for the client\n");
 		return ERROR_CODE;
 	}
-
+	printf(DISPLAY_BARRIER);	
 	/*---------------------------- send client main menu pick -----------------------------*/
 
 	packet.array_size = strlen(message_send);
@@ -139,6 +140,7 @@ int PlayerMoveRequest(SOCKET sock)
 	}
 	StringUpper(user_pick_s);
 
+	printf("\n");
 
 	//choose the player pick
 	if (STRINGS_ARE_EQUAL(user_pick_s, "SPOCK"))
@@ -211,7 +213,12 @@ int GameResultDisplay(char *match_info)
 	//now we have seperate the match information, and we want to present it to the client
 	printf("You played: %s\n", match_info_print[2]);
 	printf("%s played: %s\n", match_info_print[0], match_info_print[1]);
-	printf("%s won!\n", match_info_print[3]);
+
+	//if the game didnt end in tie (the winner param was send)
+	if (match_info_print[3][0] != '\0')
+		printf("%s won!\n", match_info_print[3]);
+
+	printf(DISPLAY_BARRIER);
 
 	return 0;
 }
@@ -221,7 +228,6 @@ int GameOverMenu(SOCKET sock)
 	char message_send[MAX_MESSAGE];
 	char user_pick_s[MAX_LINE];
 
-	int user_pick_i = -1;
 	sendthread_s packet;
 
 	int exit_code = 0, err = 0;
@@ -253,6 +259,9 @@ int GameOverMenu(SOCKET sock)
 		return ERROR_CODE;
 	}
 
+	printf(DISPLAY_BARRIER);
+
+
 	/*---------------------------- send client main menu pick -----------------------------*/
 
 	packet.array_size = strlen(message_send);
@@ -266,4 +275,111 @@ int GameOverMenu(SOCKET sock)
 
 	return 0;
 
+}
+
+int LeaderboardDisplay(char *leaderboard)
+{
+	char *str_display = NULL;
+	int err = 0;
+
+	err = ReplaceCommaWithDoubleTab(leaderboard, &str_display);
+	if (err == ERROR_CODE) return ERROR_CODE;
+
+	printf("%s\n", str_display);
+
+	printf(DISPLAY_BARRIER);
+
+	free(str_display);
+	return 0;
+}
+
+int ReplaceCommaWithDoubleTab(char *str, char **str_new)
+{
+	int i = 0, j = 0;
+
+	int str_len = strlen(str);
+	int len_new = str_len;
+	for (i = 0; i <= str_len; i++)
+	{
+		if (str[i] == ',')
+			len_new++;
+	}
+
+	*str_new = (char*)malloc(len_new + 2);
+	if (*str_new == NULL)
+	{
+		printf("Error: allocating memory for the leaderboard dsiplay");
+		return ERROR_CODE;
+	}
+
+	//go over the string and update it
+	for (i = 0; i <= str_len; i++)
+	{
+		if (str[i] == ',')
+		{
+			(*str_new)[j] = 9;
+			(*str_new)[j + 1] = 9;
+			j = j + 2;
+		}
+		else
+		{
+			(*str_new)[j] = str[i];
+			j++;
+		}
+	}
+	(*str_new)[j] = '\0';
+
+	return 0;
+}
+
+int LeaderboardMenu(SOCKET sock)
+{
+	char message_send[MAX_MESSAGE];
+	char user_pick_s[MAX_LINE];
+
+	sendthread_s packet;
+
+	int exit_code = 0, err = 0;
+
+	packet.sock = sock;
+
+	//menu selection for the user
+	printf("Choose what to do next:\n");
+	printf("1. Refresh leaderboard\n2. Return to the main menu\n");
+	err = scanf_s("%s", user_pick_s, MAX_LINE);
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: Reading from the console\n");
+		return ERROR_CODE;
+	}
+	// check the user pick
+	if (STRINGS_ARE_EQUAL(user_pick_s, "1"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_REFRESH);
+	else if (STRINGS_ARE_EQUAL(user_pick_s, "2"))
+		err = sprintf_s(message_send, MAX_MESSAGE, "%s\n", CLIENT_MAIN_MENU);
+	else
+	{
+		printf("Error: This Option is not available or wrong\n");
+		return ERROR_CODE;
+	}
+	if (err == 0 || err == EOF)
+	{
+		printf("Error: can't create the message for the client\n");
+		return ERROR_CODE;
+	}
+
+	printf(DISPLAY_BARRIER);
+
+	/*---------------------------- send client main menu pick -----------------------------*/
+
+	packet.array_size = strlen(message_send);
+	packet.array_t = message_send;
+
+	//activate the send thread and get his exit code
+	exit_code = ActivateThread((void*)&packet, 1, SENDRECV_WAITTIME);
+	//if the thread setup failed or the thread function itself failed
+	if (exit_code == ERROR_CODE)  return ERROR_CODE;
+	else if (exit_code != 0)  return CONNECTION_LOST;
+
+	return 0;
 }

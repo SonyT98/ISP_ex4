@@ -4,6 +4,8 @@
 
 #define MAX_NUM_CLIENTS 2
 
+#define DISPLAY_BARRIER "\nOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO\n\n"
+
 #define CONNECTION_FAILED 1
 #define CONNECTION_LOST 2
 #define CONNECTION_DENIED 3

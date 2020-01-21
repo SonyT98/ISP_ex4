@@ -51,8 +51,7 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 	char player_move[MAX_MESSAGE];
 	char cpu_move[MAX_MESSAGE];
 	int err = 0;
-	int menu_selection = 0, winning_player = 0, replay = 1;
-	int replay_choice = 0;
+	int menu_selection = 0, winning_player = 0;
 	int ret_val = 0;
 	//get the client username and accept him
 	err = ClientUsername(arg->client_socket, username);
@@ -91,7 +90,12 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 			}
 			break;
 		case 3: // Leaderboard
-			replay = 1;
+			err = LeaderBoardSelection(arg->client_socket);
+			if (err != 0)
+			{
+				closesocket(arg->client_socket);
+				return ERROR_CODE;
+			}
 			break;
 		case 4:// Exit
 			closesocket(arg->client_socket);

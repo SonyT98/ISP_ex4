@@ -204,4 +204,36 @@ int WriteToFile(leaderboard_player** first_p);
 *	the function will return -1 if failed.
 */
 int UpdateLeaderboard(char *username, int gamestat);
+
+/*
+* LeaderboardMessageSend gets the leaderboard message from the csv file and puts it on packet
+* Input Arguments:
+*	leaderboard_message - the leaderboard message that we read from the csv.
+*	leaderboard_length - the message length.
+* Output:
+*	the function will return -1 if failed.
+*/
+int LeaderboardRead(char **leaderboard_message, int *leaderboard_length);
+
+/*
+* SendLeaderboardMessage send the leaderboard message, in case its a new leader board.
+* The function compare the saved leaderboard with the new one and send it if necessary.
+* Input Arguments:
+*	sock - the socket that connected to the client.
+*	info - the leaderboard new info.
+*	info_length - the leaderboard message length.
+*	saved - the saved leaderboard.
+* Output:
+*	return -1 if failed, otherwise return the exit code of the thread recv and send.
+*/
+int SendLeaderboardMessage(SOCKET sock, char **info, int info_length, char **saved);
+
+/*
+* LeaderboardSelection send to the client the leaderboard, and the leaderboard menu
+* Input Arguments:
+*	sock - the socket that connected to the client.
+* Output:
+*	return -1 if failed, otherwise return the exit code of the thread recv and send.
+*/
+int LeaderBoardSelection(SOCKET sock);
 #endif // __SERVICEFUNCTIONS_H__

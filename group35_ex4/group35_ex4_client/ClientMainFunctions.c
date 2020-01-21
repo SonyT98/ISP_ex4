@@ -133,6 +133,7 @@ int initializeConnection(SOCKET *sock, char *server_adr, char *server_port)
 	}
 
 	printf("Connected to server on <%s>:<%s>\n", server_adr, server_port);
+	printf(DISPLAY_BARRIER);
 
 	return 0;
 }
@@ -295,9 +296,17 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	}
 	//the server send the leader board
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_LEADERBOARD))
+	{
+		err = LeaderboardDisplay(message_info);
+		if (err != 0) { ret = err; goto info_cleanup; }
 		*menu_waittime = 1;
+	}
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_LEADERBOARD_MENU))
+	{
+		err = LeaderboardMenu(sock);
+		if (err != 0) { ret = err; goto info_cleanup; }
 		*menu_waittime = 1;
+	}
 	else
 	{
 		printf("Error: The message received did not match the protocol!\n");

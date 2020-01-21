@@ -62,9 +62,36 @@ int GameResultDisplay(char *match_info);
 *	GameOverMenu shows the game over menu to the user and wait for response then send it to the server.
 * Input Arguments:
 *	sock - socket to be updated as a connected socket to the server.
-
+* Output:
+*	return ERROR_CODE if failed.
 */
 int GameOverMenu(SOCKET sock);
 
+/*
+* LeaderboardDisplay gets the leaderboard message and display it to the user screen.
+* Input Arguments:
+*	leaderboard - the leaderboard message.
+* Output:
+*	return ERROR_CODE if failed.
+*/
+int LeaderboardDisplay(char *leaderboard);
 
+/*
+* ReplaceCommaWithDoubleTab gets a string with multiple commas inside, and replace it with two tabs.
+* Input Arguments:
+*	str - the string message.
+*	str_new - the new string message.
+* Output:
+*	return ERROR_CODE if failed.
+*/
+int ReplaceCommaWithDoubleTab(char *str, char **str_new);
+
+/*
+* LeaderboardMenu diplay to the user the leaderboard display and send his selection to the server
+* Input Arguments:
+*	sock - the connection socket
+* Output:
+*	return ERROR_CODE if error accrued, connection failed code, zero if succeed.
+*/
+int LeaderboardMenu(SOCKET sock);
 #endif // __USERINTERFACEFUNCTIONS_H__

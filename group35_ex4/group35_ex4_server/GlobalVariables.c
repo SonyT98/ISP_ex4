@@ -26,7 +26,8 @@ HANDLE com_event[MAX_NUM_CLIENTS] = { NULL };
 
 HANDLE username_mutex = NULL;
 
-// leaderboaed mutex
+// leaderboard mutex
 HANDLE leaderboard_mutex = NULL;
+
 // Versus game replay flag
 int replay_arr[MAX_NUM_CLIENTS];

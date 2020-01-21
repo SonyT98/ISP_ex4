@@ -61,7 +61,7 @@ int serverMain(int argc, char *argv[])
 	if (retVal == ERROR_CODE)
 	{
 		ret = ERROR_CODE;
-		goto server_cleanup_2;
+		goto server_cleanup_3;
 	}
 
 	accept_exit_ThreadHandle[1] = CreateThreadSimple((LPTHREAD_START_ROUTINE)CheckExitThread, &exit_thread_id, NULL);

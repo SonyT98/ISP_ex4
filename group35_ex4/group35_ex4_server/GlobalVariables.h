@@ -31,7 +31,10 @@ extern HANDLE com_event[MAX_NUM_CLIENTS];
 
 extern HANDLE username_mutex;
 
-extern HANDLE leaderboard_mutex ;
+// leaderboard mutex & semaphores
+extern HANDLE leaderboard_mutex;
+extern HANDLE room_empty;
+extern int readers;
 
 extern int replay_arr[MAX_NUM_CLIENTS];
 

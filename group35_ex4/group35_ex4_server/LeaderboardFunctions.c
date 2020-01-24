@@ -180,7 +180,7 @@ int UpdateLeaderboard(char *username, int gamestat)
 	int retVal = 0, ret = 0;
 	leaderboard_player *current = NULL;
 
-	wait_code = WaitForSingleObject(leaderboard_mutex, INFINITE);
+	wait_code = WaitForSingleObject(room_empty, INFINITE);
 	if (WAIT_OBJECT_0 != wait_code)
 	{
 		printf("Error when waiting for leaderboard_mutex\n");
@@ -196,7 +196,7 @@ int UpdateLeaderboard(char *username, int gamestat)
 	if (err == ERROR_CODE) { ret = err; goto release; }
 
 release:
-	retVal = ReleaseMutex(leaderboard_mutex);
+	retVal = ReleaseSemaphore(room_empty,1,NULL);
 	if (FALSE == retVal)
 	{
 		printf("Error when releasing leaderboard_mutex\n");
@@ -389,7 +389,7 @@ return_ret:
 int LeaderBoardSelection(SOCKET sock)
 {
 	//variables
-	int replay = 1, err = 0, wait_code = 0;
+	int replay = 1, err = 0, wait_code = 0,wait_code_room = 0;
 	int ret = 0, exit_code;
 	char *leaderboard_info = NULL;
 	char *leaderboard_saved = NULL;
@@ -404,6 +404,7 @@ int LeaderBoardSelection(SOCKET sock)
 
 	while (replay == 1)
 	{
+		//readers operation
 		//mutex to read the file
 		wait_code = WaitForSingleObject(leaderboard_mutex, INFINITE);
 		if (WAIT_OBJECT_0 != wait_code)
@@ -413,8 +414,10 @@ int LeaderBoardSelection(SOCKET sock)
 			goto free_strings;
 		}
 
-		/* Critical section */
-		err = LeaderboardRead(&leaderboard_info, &leaderboard_length);
+		//readers/writers algoritem
+		readers += 1;
+		if (readers == 1)
+			wait_code_room = WaitForSingleObject(room_empty, INFINITE);
 
 		//release the mutex
 		exit_code = ReleaseMutex(leaderboard_mutex);
@@ -424,7 +427,48 @@ int LeaderBoardSelection(SOCKET sock)
 			ret = ERROR_CODE;
 			goto free_strings;
 		}
+		//check for error in wait for semaphore room_empty
+		if (wait_code_room != WAIT_OBJECT_0)
+		{
+			printf("Error when waiting for room empty\n");
+			ret = ERROR_CODE;
+			goto free_strings;
+		}
 
+		/* Critical section */
+		err = LeaderboardRead(&leaderboard_info, &leaderboard_length);
+
+		//mutex to read the file
+		wait_code = WaitForSingleObject(leaderboard_mutex, INFINITE);
+		if (WAIT_OBJECT_0 != wait_code)
+		{
+			printf("Error when waiting for leaderboard_mutex\n");
+			ret = ERROR_CODE;
+			goto free_strings;
+		}
+
+		//readers/writers algoritem
+		readers -= 1;
+		if (readers == 0)
+			wait_code_room = ReleaseSemaphore(room_empty, 1, NULL);
+
+		//release the mutex
+		exit_code = ReleaseMutex(leaderboard_mutex);
+		if (FALSE == exit_code)
+		{
+			printf("Error when releasing leaderboard_mutex\n");
+			ret = ERROR_CODE;
+			goto free_strings;
+		}
+		//check for errors in releasing semaphore room_empty
+		if (wait_code_room == FALSE)
+		{
+			printf("Error when releasing room empty\n");
+			ret = ERROR_CODE;
+			goto free_strings;
+		}
+
+		//after releasing the semaphore of the readers operation, check if the read operation failed
 		if (err == ERROR_CODE) { ret = ERROR_CODE; goto free_strings; }
 
 		//send the leaderboard message based on the saved leaderboard

@@ -294,10 +294,17 @@ int initializeSemaphores()
 		printf("Error creating leaderboard_mutex\n");
 		goto cleanup_9;
 	}
-
+	room_empty = CreateSemaphore(NULL, 1, 1, NULL);
+	if (room_empty == NULL)
+	{
+		printf("Error creating room_empty semaphore\n");
+		goto cleanup_10;
+	}
 
 	// all initialization went well
 	return 0;
+cleanup_11:
+	CloseHandle(room_empty);
 cleanup_10:
 	CloseHandle(leaderboard_mutex);
 cleanup_9:
@@ -350,7 +357,7 @@ static int FindFirstUnusedThreadSlot()
 void closeSemaphores()
 {
 
-
+	CloseHandle(room_empty);
 	CloseHandle(leaderboard_mutex);
 	CloseHandle(com_event[1]);
 	CloseHandle(com_event[0]);

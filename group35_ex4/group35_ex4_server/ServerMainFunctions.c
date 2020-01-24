@@ -68,7 +68,7 @@ int serverMain(int argc, char *argv[])
 	if (accept_exit_ThreadHandle[1] == NULL)
 	{
 		printf("Error creating CheckExitThread\n");
-		goto server_cleanup_3;
+		goto server_cleanup_4;
 	}
 
 
@@ -80,7 +80,7 @@ int serverMain(int argc, char *argv[])
 		if (accept_exit_ThreadHandle[2] == NULL)
 		{
 			printf("Error creating CheckExitThread\n");
-			goto server_cleanup_4;
+			goto server_cleanup_5;
 		}
 
 		// wait for ether exit or client trying to connect
@@ -89,7 +89,7 @@ int serverMain(int argc, char *argv[])
 		{
 			printf("Error while waiting using WaitForMultipleObjects\n");
 			ret = ERROR_CODE;
-			goto server_cleanup_6;
+			goto server_cleanup_7;
 		}
 
 		// check Which thread has finished 
@@ -108,7 +108,7 @@ int serverMain(int argc, char *argv[])
 			if (retVal == ERROR_CODE)
 			{
 				ret = ERROR_CODE;
-				goto server_cleanup_6;
+				goto server_cleanup_7;
 			}
 			//server denied
 			closesocket(acceptParam.AcceptSocket); //Closing the socket, dropping the connection.
@@ -122,7 +122,7 @@ int serverMain(int argc, char *argv[])
 			if (accept_exit_ThreadHandle[1] == NULL)
 			{
 				printf("Error creating CheckExitThread\n");
-				goto server_cleanup_6;
+				goto server_cleanup_7;
 			}
 
 		}
@@ -130,7 +130,7 @@ int serverMain(int argc, char *argv[])
 	}
 
 	/* EXIT procedure */
-server_cleanup_6:
+server_cleanup_7:
 
 	retVal = CloseHandle(ThreadHandles[0]);
 	retVal = CloseHandle(ThreadHandles[1]);
@@ -140,12 +140,14 @@ server_cleanup_6:
 
 
 
-server_cleanup_5:
+server_cleanup_6:
 	// close acceptThreadHandle	
 	CloseHandle(accept_exit_ThreadHandle[0]);
-server_cleanup_4 :
+server_cleanup_5 :
 	// close exitThreadHandle	
 	CloseHandle(accept_exit_ThreadHandle[1]);
+server_cleanup_4:
+	FreeLeaderboard(&first_player);
 server_cleanup_3:
 	closeSemaphores();
 server_cleanup_2:

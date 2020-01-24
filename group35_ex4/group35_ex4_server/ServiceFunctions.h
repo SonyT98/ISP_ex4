@@ -36,27 +36,40 @@ int SelectFromMenu(SOCKET sock, int *menu_select);
 * CPUGame set the game of the client against the cpu.
 * Input Arguments:
 *	sock   - the socket we opend with the client.
-*	player_move_s - the string that include the player move.
-*	cpu_move_s - the string that include the cpu move.
-*	winning_player - the winning player: 1 is the player, 2 is the cpu, 0 is a tie.
 *	username - a string of the username of the client.
 * Output:
 *	return -1 if failed, otherwise return the exit code of the thread recv and send.
 */
-int CPUGame(SOCKET sock, char* player_move_s, char* cpu_move_s, int *winning_player,char *username);
+int CPUGame(SOCKET sock,char *username);
 
 /*
 * VersusGame set the game of the client against the versus mode.
 * Input Arguments:
 *	sock			- the socket we opend with the client.
 *	index			- index of the thread used by this client
-*	player_move_s	- the string that include the player move.
-*	opp_move_s		- the string that include the cpu move.
-*	winning_player	- the winning player: 1 is the player, 2 is the cpu, 0 is a tie.
 * Output:
 *	return -1 if failed, otherwise return the exit code of the thread recv and send.
 */
-int VersusGame(SOCKET sock, int index , char* player_move_s, char* opp_move_s, int *winning_player);
+int VersusGame(SOCKET sock, int index);
+
+
+/*
+* PlayVersus ask for the client for their move and use gamesassion.txt to transfer the information between
+* thetwo threads.
+* Input Arguments:
+*	sock			- the socket we opend with the client.
+*	index			- index of the thread used by this client
+*   player_move_s   - the string that include the player move.
+*   opp_move_s      - the string that include the cpu move.
+*	player_move		- pointer to int to be updated with the opponent move.
+*	opponenet_move	- pointer to int to be updated with the opponent move.
+* Output:
+*	return -1 if failed, otherwise return the exit code of the thread recv and send.
+*/
+int playVersus(SOCKET sock, int index, char* player_move_s, char* opp_move_s, int *player_move, int *opponent_mov)
+
+
+
 
 /*
 * exeute a barrier to find if another oppenent wants to play

@@ -49,7 +49,7 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 	char *username = usernames[arg->index];
 
 	char player_move[MAX_MESSAGE];
-	char cpu_move[MAX_MESSAGE];
+	char opp_move[MAX_MESSAGE];
 	int err = 0;
 	int menu_selection = 0, winning_player = 0;
 	int ret_val = 0;
@@ -74,7 +74,7 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 		switch (menu_selection)
 		{
 		case 1: // Play with the server
-			err = CPUGame(arg->client_socket, player_move, cpu_move, &winning_player,username);
+			err = CPUGame(arg->client_socket,username);
 			if (err != 0)
 			{
 				closesocket(arg->client_socket);
@@ -82,7 +82,7 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 			}
 			break;
 		case 2: // Play versus another player
-			err = VersusGame(arg->client_socket,arg->index, player_move, cpu_move, &winning_player);
+			err = VersusGame(arg->client_socket,arg->index);
 			if (err != 0)
 			{
 				closesocket(arg->client_socket);

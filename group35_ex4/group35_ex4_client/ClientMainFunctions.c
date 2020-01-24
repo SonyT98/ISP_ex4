@@ -1,3 +1,6 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// This file include all the main functions of the client
 
 #include "ClientMainFunctions.h"
 
@@ -58,6 +61,9 @@ int clientMain(char *username, char *server_adr, char *server_port)
 				break;
 			continue;
 		}
+		//if retVal == 0 the connection has been approved
+		printf("Connected to server on <%s>:<%s>\n", server_adr, server_port);
+		printf(DISPLAY_BARRIER);
 
 		//update the first wait time to 15 seconds
 		menu_waittime = 1;
@@ -131,9 +137,6 @@ int initializeConnection(SOCKET *sock, char *server_adr, char *server_port)
 		// the connection lost, and we need to get the user pick
 		return CONNECTION_FAILED;
 	}
-
-	printf("Connected to server on <%s>:<%s>\n", server_adr, server_port);
-	printf(DISPLAY_BARRIER);
 
 	return 0;
 }
@@ -259,7 +262,11 @@ int ReceiveMessageFromServer(SOCKET sock, int *main_menu_selection, int *menu_wa
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_INVITE))
 		*menu_waittime = 1;
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_NO_OPPONENTS))
+	{
 		*menu_waittime = 1;
+		printf("There is not opponent to play against\n");
+		printf(DISPLAY_BARRIER);
+	}
 	//if the server ask the client to play his move
 	else if (STRINGS_ARE_EQUAL(message_type, SERVER_PLAYER_MOVE_REQUEST))
 	{

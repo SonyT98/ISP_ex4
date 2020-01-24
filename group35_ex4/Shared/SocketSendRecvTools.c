@@ -1,3 +1,7 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// The functions that handles the send and recevie tools on both projects
+
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 /* 
  This file was written for instruction purposes for the 
@@ -218,7 +222,7 @@ int ActivateThread(void *arg, int recv_or_send, int waittime)
 	//if there is a timeout, terminate the thread and close the thread
 	if (wait_ret == WAIT_TIMEOUT)
 	{
-		printf("Error: wait timeout to send the message\n");
+		printf("Error: wait timeout to send/recv the message\n");
 		printf("Terminating thread and exiting\n");
 		err_flag = TerminateThread(thread_handle, exit_code);
 		ret = WAIT_TIMEOUT;

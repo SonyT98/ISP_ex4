@@ -1,3 +1,7 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// The functions that handles the send and recevie tools on both projects
+
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 /* 
  This file was written for instruction purposes for the 

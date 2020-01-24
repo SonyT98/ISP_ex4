@@ -1,3 +1,6 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// This is the threads we operate in the main server
 
 #include "ServerThreads.h"
 #include "SharedHardCodedData.h"
@@ -48,8 +51,6 @@ DWORD WINAPI ServiceThread(LPSTR lpParam)
 	//variables
 	char *username = usernames[arg->index];
 
-	char player_move[MAX_MESSAGE];
-	char opp_move[MAX_MESSAGE];
 	int err = 0;
 	int menu_selection = 0, winning_player = 0;
 	int ret_val = 0;

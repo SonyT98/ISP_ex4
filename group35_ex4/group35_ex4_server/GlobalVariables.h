@@ -1,3 +1,7 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// This is the global variables
+
 #pragma once
 #ifndef __GLOBALVARIABLES_H__
 #define __GLOBALVARIABLES_H__

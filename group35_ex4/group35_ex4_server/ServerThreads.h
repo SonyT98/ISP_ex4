@@ -1,3 +1,7 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// This is the threads we operate in the main server
+
 #pragma once
 #ifndef __SERVERTHREADS_H__
 #define __SERVERTHREADS_H__

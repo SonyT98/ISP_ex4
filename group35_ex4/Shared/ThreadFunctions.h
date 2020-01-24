@@ -1,3 +1,7 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 3 in the Course Introduction to system programming
+// This is the h file that include all the thread related functions
+
 
 #ifndef __THREADFUNCTIONS_H__
 #define __THREADFUNCTIONS_H___

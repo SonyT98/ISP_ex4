@@ -1,3 +1,7 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// The shard hard coded data
+
 #pragma once
 #ifndef __SHAREDHARDCODEDDATA_H__
 #define __SHAREDHARDCODEDDATA_H___

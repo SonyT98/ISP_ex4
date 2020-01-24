@@ -125,6 +125,7 @@
     <ClInclude Include="..\Shared\ThreadFunctions.h" />
     <ClInclude Include="GlobalVariables.h" />
     <ClInclude Include="HardCodedData.h" />
+    <ClInclude Include="LeaderboardFunctions.h" />
     <ClInclude Include="ServerMainFunctions.h" />
     <ClInclude Include="ServerThreads.h" />
     <ClInclude Include="ServiceFunctions.h" />
@@ -133,6 +134,7 @@
     <ClCompile Include="..\Shared\SocketSendRecvTools.c" />
     <ClCompile Include="..\Shared\ThreadFunctions.c" />
     <ClCompile Include="GlobalVariables.c" />
+    <ClCompile Include="LeaderboardFunctions.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="ServerMainFunctions.c" />
     <ClCompile Include="ServerThreads.c" />

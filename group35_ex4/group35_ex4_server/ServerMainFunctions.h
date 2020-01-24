@@ -1,3 +1,7 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// This is the main functions of the server project
+
 #pragma once
 #ifndef __SERVERMAINFUNCTIONS_H__
 #define __SERVERMAINFUNCTIONS_H__

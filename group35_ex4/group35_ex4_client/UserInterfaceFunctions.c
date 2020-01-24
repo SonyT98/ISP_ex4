@@ -1,3 +1,6 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// This file include all the functions that interact with the user
 
 #include "UserInterfaceFunctions.h"
 

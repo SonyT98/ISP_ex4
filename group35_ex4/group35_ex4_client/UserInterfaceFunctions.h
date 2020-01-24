@@ -1,3 +1,7 @@
+// Authors - Tomer Segal 207133646, Nadav Nave 209365725
+// Exercise 4 in the Course Introduction to system programming
+// This file include all the main functions of the client
+
 #pragma once
 #ifndef __USERINTERFACEFUNCTIONS_H__
 #define __USERINTERFACEFUNCTIONS_H__
